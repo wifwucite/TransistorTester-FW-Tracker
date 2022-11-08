@@ -13,10 +13,11 @@
 
 
 /*
- *  For MCU specific settings (port and pin assignments) and LCD display
- *  settings please edit:
- *  - ATmega328:           config_328.h
- *  - ATmega324/644/1284:  config_644.h
+ *  For MCU specific settings (port and pin assignments) and display
+ *  settings please edit also:
+ *  - ATmega328:            config_328.h
+ *  - ATmega324/644/1284:   config_644.h
+ *  - ATmega640/1280/2560:  config_1280.h
  */
 
 
@@ -161,7 +162,8 @@
  *  - low and high frequency crystal oscillators
  *    and buffered frequency input
  *  - prescalers 1:1 and 16:1 (32:1)
- *  - see COUNTER_PORT in config-<MCU>.h for port pins
+ *  - uses T0 directly as frequency input
+ *  - see COUNTER_CTRL_PORT in config-<MCU>.h for port pins
  *  - requires a display with more than 2 text lines
  *  - uncomment to enable
  *  - select the circuit's prescaler setting: either 16:1 or 32:1 
@@ -218,6 +220,34 @@
 
 
 /*
+ *  L/C meter hardware option
+ *  - uses T0 directly as frequency input
+ *  - see LC_CTRL_PORT in config-<MCU>.h for port pins
+ *  - uncomment to enable
+ */
+
+//#define HW_LC_METER
+
+
+/*
+ *  L/C meter: value of reference capacitor C_p (in 0.1 pF)
+ *  - should be around 1000pF
+ */
+
+#define LC_METER_C_REF        10000
+
+
+/*
+ *  L/C meter: also display frequency of LC oscillator
+ *  - helps to spot the oscillator's frequency drifting 
+ *  - requires display with more than two text lines
+ *  - uncomment to enable
+ */
+
+//#define LC_METER_SHOW_FREQ
+
+
+/*
  *  relay for parallel cap (sampling ADC)
  *  - uncomment to enable (not implemented yet)
  */
@@ -259,7 +289,7 @@
 
 
 /*
- *  ESR measurement and in-circuit ESR measurement
+ *  ESR measurement
  *  - requires MCU clock >= 8 MHz
  *  - choose SW_OLD_ESR for old method starting at 180nF
  *  - uncomment to enable
@@ -267,6 +297,15 @@
 
 #define SW_ESR
 //#define SW_OLD_ESR
+
+
+/*
+ *  ESR Tool (in-circuit ESR measurement)
+ *  - requires SW_ESR or SW_OLD_ESR to be enabled
+ *  - uncomment to enable
+ */
+
+//#define SW_ESR_TOOL
 
 
 /*
@@ -355,12 +394,19 @@
 
 
 /*
- *  check for Unijunction Transistors
+ *  check for Unijunction Transistor
  *  - uncomment to enable
  */
 
 #define SW_UJT
 
+
+/*
+ *  check for Schottky Transistor (Schottky-clamped BJT)
+ *  - uncomment to enable
+ */
+
+#define SW_SCHOTTKY_BJT
 
 
 /*
@@ -383,7 +429,17 @@
 
 
 /*
- *  OneWire: read ROM codes of connected devices
+ *  OneWire: read and display ROM code
+ *  - option for OneWire related tools
+ *  - requires display with more than 2 text lines
+ *  - uncomment to enable
+ */
+
+//#define ONEWIRE_READ_ROM
+
+
+/*
+ *  scan OneWire bus for devices and list their ROM codes
  *  - requires display with more than 2 text lines
  *  - uncomment to enable
  *  - also enable ONEWIRE_PROBES or ONEWIRE_IO_PIN (see section 'Busses')
@@ -407,23 +463,32 @@
  *  - uncomment to enable
  */
 
-#define SW_REVERSE_HFE
+//#define SW_REVERSE_HFE
 
 
 /*
- *  monitor resistance and inductance on probes #1 and #3
+ *  display I_C/I_E test current for hFE measurement
+ *  - I_C for common emitter circuit
+ *    I_E for common collector circuit
  *  - uncomment to enable
  */
 
-//#define SW_MONITOR_RL
+//#define SW_HFE_CURRENT
 
 
 /*
- *  monitor capacitance on probes #1 and #3
- *  - uncomment to enable
+ *  R/C/L monitors
+ *  - monitor passive components connected to probes #1 and #3
+ *  - monitors for L require SW_INDUCTOR to be enabled
+ *  - for ESR either SW_ESR or SW_OLD_ESR needs to be enabled
+ *  - uncomment to enable (one or more)
  */
 
-//#define SW_MONITOR_C
+//#define SW_MONITOR_R          /* just R */
+//#define SW_MONITOR_C          /* just C plus ESR */
+//#define SW_MONITOR_L          /* just L */
+//#define SW_MONITOR_RCL        /* R plus L, or C plus ESR */
+//#define SW_MONITOR_RL         /* R plus L */
 
 
 /*
@@ -485,11 +550,11 @@
 
 /*
  *  Disable hFE measurement with common collector circuit and Rl as
- *  base resistor
+ *  base resistor.
  *  - problem:
- *    hFE values are too high because base voltage is measured too low
+ *    hFE values are way too high.
  *  - affected testers:
- *    Hiland M664 (under investigation)
+ *    Hiland M644 (under investigation)
  *  - uncomment to enable
  */
 
@@ -532,6 +597,7 @@
  *  - Polish (based on ISO 8859-1)
  *  - Polish 2 (with Polish characters based on ISO 8859-2)
  *  - Spanish
+ *  - Romanian
  *  - Russian (with cyrillic characters based on Windows-1251)
  *  - Russian 2 (with cyrillic characters based on Windows-1251)
  */
@@ -544,9 +610,10 @@
 //#define UI_ITALIAN
 //#define UI_POLISH
 //#define UI_POLISH_2
-//#define UI_SPANISH
+//#define UI_ROMANIAN
 //#define UI_RUSSIAN
 //#define UI_RUSSIAN_2
+//#define UI_SPANISH
 
 
 /*
@@ -563,6 +630,14 @@
  */
 
 //#define UI_FAHRENHEIT
+
+
+/*
+ *  Display hexadecimal values in uppercase instead of lowercase
+ *  - uncomment to enable
+ */
+
+//#define UI_HEX_UPPERCASE
 
 
 /*
@@ -592,6 +667,14 @@
  */
 
 //#define UI_KEY_HINTS
+
+
+/*
+ *  Enter menu to select adjustment profile after powering on.
+ *  - uncomment to enable
+ */
+
+//#define UI_CHOOSE_PROFILE
 
 
 /*
@@ -628,6 +711,8 @@
  *  - If this number is reached the tester will power off.
  *  - When set to zero the tester will run only once and turn off
  *    after CYCLE_DELAY.
+ *  - When set to 255 this feature will be disabled and the tester runs
+ *    until it's powered off manually.
  */
 
 #define CYCLE_MAX        5
@@ -640,6 +725,16 @@
  */
 
 //#define POWER_OFF_TIMEOUT     60
+
+
+/*
+ *  component symbols for fancy pinout
+ *  - for 3-pin semiconductors
+ *  - requires graphics display and symbol bitmap
+ *  - uncomment to enable
+ */
+
+#define SW_SYMBOLS
 
 
 /*
@@ -905,6 +1000,42 @@
  */
 
 //#define ADC_LARGE_BUFFER_CAP
+
+
+
+/* ************************************************************************
+ *   R & D - meant for firmware developers
+ * ************************************************************************ */
+
+
+/*
+ *  Enable read functions for display module.
+ *  - display driver and interface settings have to support this
+ *  - uncomment to enable
+ */
+
+//#define LCD_READ
+
+
+/*
+ *  Read ID of display controller.
+ *  - ID is shown at welcome screen (after firmware version)
+ *  - requires display read functions (LCD_READ)
+ *  - recommended: serial output (UI_SERIAL_COPY)
+ *  - uncomment to enable
+ */
+
+//#define SW_DISPLAY_ID
+
+
+/*
+ *  Read registers of display controller and output them via TTL serial.
+ *  - requires display read functions (LCD_READ) and
+ *    serial output (UI_SERIAL_COPY)
+ *  - uncomment to enable
+ */
+
+//#define SW_DISPLAY_REG
 
 
 
@@ -1179,6 +1310,36 @@
 #endif
 
 
+/* options which require inductance measurement */
+#ifndef SW_INDUCTOR
+
+  /* L monitor */
+  #ifdef SW_MONITOR_L
+    #undef SW_MONITOR_L
+  #endif
+
+  /* RCL Monitor */
+  #ifdef SW_MONITOR_RCL
+    #undef SW_MONITOR_RCL
+  #endif
+
+  /* RL Monitor */
+  #ifdef SW_MONITOR_RL
+    #undef SW_MONITOR_RL
+  #endif
+
+#endif
+
+
+/* options which require ESR measurement */
+#if ! defined (SW_ESR) && ! defined (SW_OLD_ESR)
+  /* ESR tool */
+  #ifdef SW_ESR_TOOL
+    #undef SW_ESR_TOOL
+  #endif
+#endif
+
+
 /* options which require a MCU clock >= 8MHz */
 #if CPU_FREQ < 8000000
 
@@ -1196,6 +1357,10 @@
 
 
 /* SPI */
+#if defined (SPI_BITBANG) && defined (SPI_HARDWARE)
+  #error <<< Select either bitbang or hardware SPI! >>>
+#endif
+
 #if defined (SPI_BITBANG) || defined (SPI_HARDWARE)
   #define HW_SPI
 #endif
@@ -1209,12 +1374,20 @@
 
 
 /* I2C */
+#if defined (I2C_BITBANG) && defined (I2C_HARDWARE)
+  #error <<< Select either bitbang or hardware I2C! >>>
+#endif
+
 #if defined (I2C_BITBANG) || defined (I2C_HARDWARE)
   #define HW_I2C
 #endif
 
 
 /* TTL serial */
+#if defined (SERIAL_BITBANG) && defined (SERIAL_HARDWARE)
+  #error <<< Select either bitbang or hardware serial interface! >>>
+#endif
+
 #if defined (SERIAL_BITBANG) || defined (SERIAL_HARDWARE)
   #define HW_SERIAL
 #endif
@@ -1231,12 +1404,15 @@
 
 /* options which require TTL serial */
 #ifndef HW_SERIAL
+  /* VT100 display */
   #ifdef LCD_VT100
     #undef LCD_VT100
   #endif
+  /* serial copy */
   #ifdef UI_SERIAL_COPY
     #undef UI_SERIAL_COPY
   #endif
+  /* remote commands */
   #ifdef UI_SERIAL_COMMANDS
     #undef UI_SERIAL_COMMANDS
   #endif
@@ -1250,19 +1426,24 @@
 #endif
 
 
-/* OneWire: probe leads prevail */
-#ifdef ONEWIRE_PROBES
-  #undef ONEWIRE_IO_PIN
-#endif
-#ifdef ONEWIRE_IO_PIN
-  #undef ONEWIRE_PROBES
+/* OneWire */
+#if defined (ONEWIRE_PROBES) && defined (ONEWIRE_IO_PIN)
+  #error <<< Select either probes or dedicated IO pin for Onewire! >>>
 #endif
 
 /* options which require OneWire */
 #if ! defined (ONEWIRE_PROBES) && ! defined (ONEWIRE_IO_PIN)
+
+  /* DS18B20 */
   #ifdef SW_DS18B20
     #undef SW_DS18B20
   #endif
+
+  /* OneWire scan */
+  #ifdef SW_ONEWIRE_SCAN
+    #undef SW_ONEWIRE_SCAN
+  #endif
+
 #endif
 
 
@@ -1280,13 +1461,19 @@
 #endif
 
 
-/* options which require a color graphics display */
+/* options which require a color display */
 #ifndef LCD_COLOR
 
   /* color coding for probes */
   #ifdef SW_PROBE_COLORS
     #undef SW_PROBE_COLORS
   #endif
+
+#endif
+
+
+/* options which require a color graphics display */
+#if ! defined (LCD_COLOR) || ! defined (LCD_GRAPHIC)
 
   /* resistor color-codes */
   #ifdef SW_R_E24_5_CC
@@ -1299,32 +1486,36 @@
     #undef SW_R_E96_CC
   #endif
 
-  /* capacitor color-codes */
-
-  /* inductor color-codes */
-
 #endif
 
 
 /* component symbols for fancy pinout */
 #if defined (SYMBOLS_24X24_H)
-  #define SW_SYMBOLS
+  #define SYMBOLS_SELECTED
 #endif
 #if defined (SYMBOLS_24X24_HF) || defined (SYMBOLS_30X32_HF) || defined (SYMBOLS_32X32_HF)
-  #define SW_SYMBOLS
+  #define SYMBOLS_SELECTED
 #endif
 #if defined (SYMBOLS_24X24_VFP)
-  #define SW_SYMBOLS
+  #define SYMBOLS_SELECTED
 #endif
 #if defined (SYMBOLS_24X24_VP_F)
-  #define SW_SYMBOLS
+  #define SYMBOLS_SELECTED
 #endif
 
-/* symbols require graphic display */
+/* fancy pinout requires graphic display and symbol set */
 #ifdef SW_SYMBOLS
+
+  /* graphic display */
   #ifndef LCD_GRAPHIC
     #undef SW_SYMBOLS
   #endif
+
+  /* symbol set */
+  #ifndef SYMBOLS_SELECTED
+    #undef SW_SYMBOLS
+  #endif
+
 #endif
 
 
@@ -1334,12 +1525,9 @@
 #endif
 
 
-/* IR detector/decoder: probe lead based decoder prevails */
-#ifdef SW_IR_RECEIVER
-  #undef HW_IR_RECEIVER
-#endif
-#ifdef HW_IR_RECEIVER
-  #undef SW_IR_RECEIVER
+/* IR detector/decoder */
+#if defined (SW_IR_RECEIVER) && defined (HW_IR_RECEIVER)
+  #error <<< Select either probes or dedicated IO pin for IR detector! >>>
 #endif
 
 
@@ -1351,30 +1539,60 @@
 #endif
 
 
+/* read functions for display require bus with read support enabled */
+#ifdef LCD_READ
+  #if defined(LCD_SPI) && ! defined(SPI_RW)
+    #undef LCD_READ
+  #endif
+  #if defined(LCD_I2C) && ! defined(I2C_RW)
+    #undef LCD_READ
+  #endif
+  /* can't check parallel busses */
+#endif
+
+/* display ID requires read functions for display */
+#ifdef SW_DISPLAY_ID
+  #ifndef LCD_READ
+    #undef SW_DISPLAY_ID
+  #endif
+#endif
+
+/* output of display registers requires read functions for display
+   and serial output */
+#ifdef SW_DISPLAY_REG
+  #ifndef LCD_READ
+    #undef SW_DISPLAY_REG
+  #endif
+  #ifndef UI_SERIAL_COPY
+    #undef SW_DISPLAY_REG
+  #endif
+#endif
+
+
 
 /* ************************************************************************
  *   simplify ifdefs
  * ************************************************************************ */
 
 
-/* E6 */
+/* E6 norm values */
 #if defined (SW_C_E6_T) || defined (SW_L_E6_T)
   #define SW_E6
 #endif
 
-/* E12 */
+/* E12 norm values */
 #if defined (SW_C_E12_T) || defined (SW_L_E12_T)
   #define SW_E12
 #endif
 
-/* E24 */
+/* E24 norm values */
 #if defined (SW_R_E24_5_T) || defined (SW_R_E24_5_CC) || defined (SW_R_E24_1_T) || defined (SW_R_E24_1_CC)
   #define SW_E24
 #endif
 
-/* E96 */
+/* E96 norm values */
 #if defined (SW_R_E96_T) || defined (SW_R_E96_CC)
-  #define SW_E86
+  #define SW_E96
 #endif
 
 
@@ -1406,6 +1624,14 @@
 #endif
 
 
+/* SmoothLongKeyPress() */
+#if defined (SW_PWM_PLUS) || defined (SW_SERVO) || defined (HW_EVENT_COUNTER) || defined (HW_LC_METER)
+  #ifndef FUNC_SMOOTHLONGKEYPRESS
+    #define FUNC_SMOOTHLONGKEYPRESS
+  #endif
+#endif
+
+
 /* Display_FullValue() */
 #if defined (SW_SQUAREWAVE) || defined (SW_PWM_PLUS) || defined (HW_FREQ_COUNTER_EXT) || defined (SW_SERVO)
   #ifndef FUNC_DISPLAY_FULLVALUE
@@ -1419,7 +1645,7 @@
   #endif
 #endif
 
-#if defined (FUNC_EVALUE) || defined (FUNC_COLORCODE)
+#if defined (FUNC_EVALUE) || defined (FUNC_COLORCODE) || defined (LC_METER_SHOW_FREQ)
   #ifndef FUNC_DISPLAY_FULLVALUE
     #define FUNC_DISPLAY_FULLVALUE
   #endif
@@ -1427,9 +1653,16 @@
 
 
 /* Display_HexByte() */
-#if defined (SW_IR_RECEIVER) || defined (HW_IR_RECEIVER) || defined (SW_ONEWIRE_SCAN) || defined (SW_FONT_TEST)
+#if defined (SW_IR_RECEIVER) || defined (HW_IR_RECEIVER) || defined (ONEWIRE_READ_ROM) || defined (SW_ONEWIRE_SCAN) || defined (SW_FONT_TEST) || defined (SW_DISPLAY_REG)
   #ifndef FUNC_DISPLAY_HEXBYTE
     #define FUNC_DISPLAY_HEXBYTE
+  #endif
+#endif
+
+/* Display_HexValue() */
+#if defined (SW_IR_TRANSMITTER) || defined (SW_DISPLAY_ID)
+  #ifndef FUNC_DISPLAY_HEXVALUE
+    #define FUNC_DISPLAY_HEXVALUE
   #endif
 #endif
 

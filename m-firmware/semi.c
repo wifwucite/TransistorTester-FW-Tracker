@@ -485,7 +485,7 @@ void GetGateThreshold(uint8_t Type)
   int32_t           Ugs = 0;       /* gate threshold voltage / Vth */
   uint8_t           Drain_Rl;      /* Rl register bits for drain */
   uint8_t           Drain_ADC;     /* ADC port register bits for drain */
-  uint8_t           PullMode;
+  uint8_t           PullMode;      /* pull-up/down mode */
   uint8_t           Counter;       /* loop counter */
 
   /*
@@ -519,10 +519,16 @@ void GetGateThreshold(uint8_t Type)
    */
 
   /* sanitize register bits for drain to prevent a never-ending loop */ 
-//  Drain_ADC &= 0b00000111;              /* filter probe pins */
   Drain_ADC &= ((1 << TP1) | (1 << TP2) | (1 << TP3));
   ADMUX = Probes.Ch_3 | ADC_REF_VCC;    /* select probe-3 for ADC input */
                                         /* and use Vcc as reference */
+  #ifndef ADC_LARGE_BUFFER_CAP
+    /* buffer cap: 1nF or none at all */
+    wait100us();                   /* time for voltage stabilization */
+  #else
+    /* buffer cap: 100nF */
+    wait10ms();                    /* time for voltage stabilization */
+  #endif
 
   /* sample 10 times */
   for (Counter = 0; Counter < 10; Counter++) 
@@ -536,6 +542,7 @@ void GetGateThreshold(uint8_t Type)
     R_DDR = Drain_Rl | Probes.Rh_3;
 
     /* wait until FET conducts */
+    /* any problem will cause a watchdog timeout */
     if (Type & TYPE_N_CHANNEL)          /* n-channel */
     {
       /* FET conducts when the voltage at the drain reaches low level */
@@ -571,6 +578,9 @@ void GetGateThreshold(uint8_t Type)
 
   /* save data */
   Semi.U_2 = (int16_t)Ugs;       /* gate threshold voltage (in mV) */
+
+  /* update reference source for next ADC run */
+  Cfg.Ref = ADC_REF_VCC;         /* we've used Vcc as reference */
 }
 
 
@@ -594,6 +604,9 @@ uint32_t Get_hFE_C(uint8_t Type)
   uint16_t          U_R_e;         /* voltage across emitter resistor */
   uint16_t          U_R_b;         /* voltage across base resistor */
   uint16_t          Ri;            /* internal resistance of MCU */
+  #ifdef SW_HFE_CURRENT
+  int32_t           I_e;           /* emitter current */
+  #endif
 
 
   /*
@@ -627,6 +640,11 @@ uint32_t Get_hFE_C(uint8_t Type)
 
     U_R_e = ReadU_5ms(Probes.Ch_2);          /* U_R_e = U_e */
     U_R_b = Cfg.Vcc - ReadU(Probes.Ch_3);    /* U_R_b = Vcc - U_b */
+
+    #ifdef SW_HFE_CURRENT
+    I_e = (int32_t)U_R_e;               /* U_R_e (mV) */
+    Ri = NV.RiL;                        /* RiL (0.1 Ohms) */
+    #endif
   }
   else                             /* PNP */
   {
@@ -639,6 +657,11 @@ uint32_t Get_hFE_C(uint8_t Type)
 
     U_R_e = Cfg.Vcc - ReadU_5ms(Probes.Ch_1);     /* U_R_e = Vcc - U_e */
     U_R_b = ReadU(Probes.Ch_3);                   /* U_R_b = U_b */
+
+    #ifdef SW_HFE_CURRENT
+    I_e = -(int32_t)U_R_e;              /* negative U_R_e (mV) */
+    Ri = NV.RiH;                        /* RiH (0.1 Ohms) */
+    #endif
   }
 
 
@@ -652,6 +675,15 @@ uint32_t Get_hFE_C(uint8_t Type)
 
   hFE = (uint32_t)((U_R_e - U_R_b) / U_R_b);
 
+  #ifdef SW_HFE_CURRENT
+  /* calculate emitter current: I_e = U_R_e / (Rl + Ri) */
+  /* NPN: Ri = RiL / PNP: Ri = RiH */
+  I_e *= 10000;                    /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
+  Ri += (R_LOW * 10);              /* Ri + Rl (in 0.1 Ohms) */
+  I_e /= Ri;                       /* / (Rl + Ri) */
+  Semi.U_2 = (int16_t)I_e;         /* save I_e (in µA) */
+  #endif
+
 
   /*
    *  for a possible high gain BJT or Darlington change the base resistor
@@ -660,7 +692,7 @@ uint32_t Get_hFE_C(uint8_t Type)
 
   if (U_R_b <= 15)            /* I_b <= 21 µA */
   {
-    if (Type == TYPE_NPN)            /* NPN */
+    if (Type == TYPE_NPN)          /* NPN */
     {
       /* change probes: probe-3 -- Rh -- Vcc */
       R_DDR = Probes.Rl_2 | Probes.Rh_3;     /* select Rl for probe-2 & Rh for probe-3 */
@@ -669,9 +701,13 @@ uint32_t Get_hFE_C(uint8_t Type)
       U_R_e = ReadU_5ms(Probes.Ch_2);             /* U_R_e = U_e */
       U_R_b = Cfg.Vcc - ReadU(Probes.Ch_3);       /* U_R_b = Vcc - U_b */
 
-      Ri = NV.RiL;                           /* get internal resistance */
+      #ifdef SW_HFE_CURRENT
+      I_e = (int32_t)U_R_e;             /* U_R_e (mV) */
+      #endif
+
+      Ri = NV.RiL;                      /* get internal resistance */
     }
-    else                             /* PNP */
+    else                           /* PNP */
     {
       /* change probes: Gnd -- Rh -- probe-3 */
       R_DDR = Probes.Rl_1 | Probes.Rh_3;     /* pull down base via Rh */
@@ -679,7 +715,11 @@ uint32_t Get_hFE_C(uint8_t Type)
       U_R_e = Cfg.Vcc - ReadU_5ms(Probes.Ch_1);   /* U_R_e = Vcc - U_e */
       U_R_b = ReadU(Probes.Ch_3);                 /* U_R_b = U_b */
 
-      Ri = NV.RiH;                           /* get internal resistance */
+      #ifdef SW_HFE_CURRENT
+      I_e = -(int32_t)U_R_e;            /* negative U_R_e (mV) */
+      #endif
+
+      Ri = NV.RiH;                      /* get internal resistance */
     }
 
     /*
@@ -689,14 +729,25 @@ uint32_t Get_hFE_C(uint8_t Type)
      *      = (U_R_e * R_b) / (U_R_b * R_e)
      */
 
-    if (U_R_b == 0) U_R_b = 1;               /* prevent division by zero */
-    hFE2 = U_R_e * R_HIGH;                   /* U_R_e * R_b */
-    hFE2 /= U_R_b;                           /* / U_R_b */
-    hFE2 *= 10;                              /* upscale to 0.1 */
-    hFE2 /= (R_LOW * 10) + Ri;               /* / R_e in 0.1 Ohm */
+    if (U_R_b == 0) U_R_b = 1;          /* prevent division by zero */
+    hFE2 = U_R_e * R_HIGH;              /* U_R_e * R_b */
+    hFE2 /= U_R_b;                      /* / U_R_b */
+    hFE2 *= 10;                         /* upscale to 0.1 */
+    Ri += (R_LOW * 10);                 /* R_e = Ri + Rl (in 0.1 Ohms) */
+    hFE2 /= Ri;                         /* / R_e in 0.1 Ohms */
 
     /* keep the higher hFE */
-    if (hFE2 > hFE) hFE = hFE2;
+    if (hFE2 > hFE)                     /* hFE_Rh higher */
+    {
+      hFE = hFE2;                       /* update hFE */
+      #ifdef SW_HFE_CURRENT
+      /* calculate emitter current: I_e = U_R_e / (Rl + Ri) */
+      /* NPN: Ri = RiL / PNP: Ri = RiH */
+      I_e *= 10000;                /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
+      I_e /= Ri;                   /* / (Rl + Ri) */
+      Semi.U_2 = (int16_t)I_e;     /* update I_e (in µA) */
+      #endif
+    }
   }
 
   #else
@@ -722,6 +773,10 @@ uint32_t Get_hFE_C(uint8_t Type)
     U_R_e = ReadU_5ms(Probes.Ch_2);               /* U_R_e = U_e */
     U_R_b = Cfg.Vcc - ReadU(Probes.Ch_3);         /* U_R_b = Vcc - U_b */
 
+    #ifdef SW_HFE_CURRENT
+    I_e = (int32_t)U_R_e;               /* U_R_e (mV) */
+    #endif
+
     Ri = NV.RiL;                        /* get internal resistance */
   }
   else                             /* PNP */
@@ -735,6 +790,10 @@ uint32_t Get_hFE_C(uint8_t Type)
 
     U_R_e = Cfg.Vcc - ReadU_5ms(Probes.Ch_1);     /* U_R_e = Vcc - U_e */
     U_R_b = ReadU(Probes.Ch_3);                   /* U_R_b = U_b */
+
+    #ifdef SW_HFE_CURRENT
+    I_e = -(int32_t)U_R_e;              /* negative U_R_e (mV) */
+    #endif
 
     Ri = NV.RiH;                        /* get internal resistance */
   }
@@ -750,7 +809,16 @@ uint32_t Get_hFE_C(uint8_t Type)
   hFE = U_R_e * R_HIGH;                 /* U_R_e * R_b */
   hFE /= U_R_b;                         /* / U_R_b */
   hFE *= 10;                            /* upscale to 0.1 */
-  hFE /= (R_LOW * 10) + Ri;             /* / R_e in 0.1 Ohm */
+  Ri += (R_LOW * 10);                   /* R_e = Ri + Rl (in 0.1 Ohms) */
+  hFE /= Ri;                            /* / R_e in 0.1 Ohms */
+
+  #ifdef SW_HFE_CURRENT
+  /* calculate emitter current: I_e = U_R_e / (Rl + Ri) */
+  /* NPN: Ri = RiL / PNP: Ri = RiH */
+  I_e *= 10000;                    /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
+  I_e /= Ri;                       /* / (Rl + Ri) */
+  Semi.U_2 = (int16_t)I_e;         /* save I_e (in µA) */
+  #endif
 
   #endif
 
@@ -761,6 +829,7 @@ uint32_t Get_hFE_C(uint8_t Type)
 
 /*
  *  check for BJT, enhancement-mode MOSFET and IGBT
+ *  - sets hFE test circuit type in Semi.Flags (when SW_HFE_CIRCUIT)
  *
  *  requires:
  *  - BJT_Type: NPN or PNP (also used for FET channel type)
@@ -770,12 +839,17 @@ uint32_t Get_hFE_C(uint8_t Type)
 void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
 {
   uint8_t           FET_Type;      /* MOSFET type */
+  uint8_t           Flag = 0;      /* flag */
   uint16_t          U_R_c;         /* voltage across collector resistor */
   uint16_t          U_R_b;         /* voltage across base resistor */
   uint16_t          BJT_Level;     /* voltage threshold for BJT */
   uint16_t          FET_Level;     /* voltage threshold for FET */
+  uint16_t          Ri;            /* internal resistance of MCU */
   uint32_t          hFE_C;         /* hFE (common collector) */
   uint32_t          hFE_E;         /* hFE (common emitter) */
+  #ifdef SW_HFE_CURRENT
+  int32_t           I_c;           /* collector current */
+  #endif
 
   /*
    *  init, set probes and measure
@@ -803,6 +877,12 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
     wait50ms();                              /* wait to skip gate charging of a FET */
     U_R_c = Cfg.Vcc - ReadU(Probes.Ch_1);    /* U_R_c = Vcc - U_c */ 
     U_R_b = Cfg.Vcc - ReadU(Probes.Ch_3);    /* U_R_b = Vcc - U_b */
+
+    #ifdef SW_HFE_CURRENT
+    I_c = (int32_t)U_R_c;          /* U_R_c (mV) */
+    #endif
+
+    Ri = NV.RiH;                   /* RiH (0.1 Ohms) */
   }
   else                        /* PNP / p-channel */
   {
@@ -822,6 +902,12 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
     R_DDR = Probes.Rl_2 | Probes.Rh_3;  /* pull down base via Rh */
     U_R_c = ReadU_5ms(Probes.Ch_2);     /* U_R_c = U_c */
     U_R_b = ReadU(Probes.Ch_3);         /* U_R_b = U_b */
+
+    #ifdef SW_HFE_CURRENT
+    I_c = -(int32_t)U_R_c;         /* negative U_R_c (mV) */
+    #endif
+
+    Ri = NV.RiL;                   /* RiL (0.1 Ohms) */
   }
 
 
@@ -892,25 +978,34 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
      *             = U_R_c_conducting - U_Rl
      */
 
-    if (U_R_c > U_Rl) U_R_c -= U_Rl;       /* - U_Rl (leakage) */
-    hFE_E = U_R_c * R_HIGH;                /* U_R_c * R_b */
-    hFE_E /= U_R_b;                        /* / U_R_b */
-    hFE_E *= 10;                           /* upscale to 0.1 */
+    if (U_R_c > U_Rl) U_R_c -= U_Rl;    /* - U_Rl (leakage) */
+    hFE_E = U_R_c * R_HIGH;             /* U_R_c * R_b */
+    hFE_E /= U_R_b;                     /* / U_R_b */
+    hFE_E *= 10;                        /* upscale to 0.1 */
+    Ri += (R_LOW * 10);                 /* R_c = Ri + Rl (in 0.1 Ohms) */
+    hFE_E /= Ri;                        /* / R_c in 0.1 Ohms */
 
-    if (BJT_Type == TYPE_NPN)      /* NPN */
-    {
-      hFE_E /= (R_LOW * 10) + NV.RiH;    /* / R_c in 0.1 Ohm */
-    }
-    else                           /* PNP */
-    {
-      hFE_E /= (R_LOW * 10) + NV.RiL;    /* / R_c in 0.1 Ohm */
-    }
+    Flag = HFE_COMMON_EMITTER;          /* common emitter circuit */
+
+    #ifdef SW_HFE_CURRENT
+    /* calculate collector current: I_c = U_R_c / (Rl + Ri) */
+    /* NPN: Ri = RiH / PNP: Ri = RiL */
+    I_c *= 10000;                  /* scale to 0.1 µV (for µA and Ri's 0.1 Ohms */
+    I_c /= Ri;                     /* / (Rl + Ri) */
+    #endif
 
     /* get hFE for common collector circuit */
     hFE_C = Get_hFE_C(BJT_Type);
 
     /* keep higher hFE of both test circuits */
-    if (hFE_C > hFE_E) hFE_E = hFE_C;
+    if (hFE_C > hFE_E)                  /* hFE_C larger */
+    {
+      hFE_E = hFE_C;                    /* take hFE_C */
+      Flag = HFE_COMMON_COLLECTOR;      /* common collector circuit */
+      #ifdef SW_HFE_CURRENT
+      I_c = (int32_t)Semi.U_2;          /* take I_e from hFE_C measurement */
+      #endif
+    }
 
     /* update logic */
     FET_Type = 0;             /* use as update flag */
@@ -979,7 +1074,11 @@ void CheckTransistor(uint8_t BJT_Type, uint16_t U_Rl)
 
       /* save data */
       Semi.F_1 = hFE_E;                 /* hFE */
-      Semi.C_value = Caps[0].Value;     /* E-B capacitance */
+      Semi.Flags = Flag;                /* hFE circuit type */
+      #ifdef SW_HFE_CURRENT
+      Semi.U_3 = (int16_t)I_c;          /* I_c/I_e (in µA) */
+      #endif
+      Semi.C_value = Caps[0].Value;     /* B-E/E-B capacitance */
       Semi.C_scale = Caps[0].Scale;
       Semi.A = Probes.ID_3;             /* base pin */
 
@@ -1143,14 +1242,13 @@ void CheckDepletionModeFET(uint16_t U_Rl)
   uint16_t          Offset;        /* offset voltage */
   uint16_t          U_1;           /* voltage #1 */
   uint16_t          U_2;           /* voltage #2 */
-  uint16_t          U_3;           /* voltage #3 */
   uint16_t          Diff_1 = 0;    /* voltage difference #1 */
   uint16_t          Diff_2 = 0;    /* voltage difference #2 */
   uint8_t           Flag = 0;      /* control and signal flag */
 
 
   /*
-   *  required probe set up (by calling function):
+   *  required probe setup (by calling function):
    *  - Gnd -- Rl -- probe-2 / probe-1 -- Vcc
    *
    *  MOSFETs require a single pass detection because of the intrinsic
@@ -1211,8 +1309,10 @@ void CheckDepletionModeFET(uint16_t U_Rl)
   {
     /*
      *  Check if we might have a Germanium BJT with a high leakage current:
-     *  - the base-emitter junction of a BJT should pass a contant current with
+     *  - the base-emitter junction of a BJT should pass a constant current with
      *    a low V_BE
+     *  - measure V_BE
+     *  - voltage drop across RiL at emitter is about 150mV
      *  - assumes: probe-1 = C / probe-2 = E / probe-3 = B
      *  - NPN
      */
@@ -1223,12 +1323,38 @@ void CheckDepletionModeFET(uint16_t U_Rl)
     R_PORT = Probes.Rl_3;                    /* pull up base via Rl */
     ADC_PORT = 0;
     ADC_DDR = Probes.Pin_2;                  /* pull down emitter directly */
-    U_3 = ReadU_20ms(Probes.Ch_3);           /* get voltage at base */
+    U_1 = ReadU_20ms(Probes.Ch_3);           /* get voltage at base */
     ADC_DDR = 0;
 
-    if (U_3 < 700)            /* low V_BE */
+    if (U_1 < 700)          /* low V_BE < 550mV + 150mV */
     {
-      Flag = 1;               /* most likely a BJT */
+      Flag = 1;             /* most likely a Ge BJT */
+    }
+
+
+    /*
+     *  Check if we might have a Schottky-clamped BJT with a Schottky diode
+     *  between base and collector:
+     *  - measure V_f of Schottky diode
+     *  - assumes: probe-1 = C / probe-2 = E / probe-3 = B
+     *  - NPN
+     */
+
+    /* get base voltage when base is pulled up by Rl */
+    /* set probes: Gnd -- probe-1 / probe-3 -- Rl -- Vcc / probe-2 -- HiZ */
+    ADC_DDR = Probes.Pin_1;                  /* pull down collector directly */
+    U_1 = ReadU_20ms(Probes.Ch_3);           /* get voltage at base */
+    U_2 = ReadU(Probes.Ch_1);                /* get voltage at collector */
+    ADC_DDR = 0;
+
+    if (U_1 > U_2)          /* valid voltages */
+    {
+      U_1 -= U_2;           /* V_f = U_B - U_C */
+
+      if (U_1 < 450)        /* low V_f < 450mV */
+      {
+        Flag = 1;           /* most likely a Schottky BJT */
+      }
     }
 
 
@@ -1278,7 +1404,7 @@ void CheckDepletionModeFET(uint16_t U_Rl)
     }
     else                      /* JFET */
     {
-      if (Flag == 0)          /* not a leaky Ge BJT */
+      if (Flag == 0)          /* not a BJT */
       {
         /* n channel JFET (depletion-mode only) */
         Check.Type = TYPE_N_CHANNEL | TYPE_DEPLETION | TYPE_JFET;
@@ -1329,8 +1455,10 @@ void CheckDepletionModeFET(uint16_t U_Rl)
     {
       /*
        *  Check if we might have a Germanium BJT with a high leakage current:
-       *  - the base-emitter junction of a BJT should pass a contant current with
+       *  - the base-emitter junction of a BJT should pass a constant current with
        *    a low V_BE
+       *  - measure V_BE
+       *  - voltage drop across RiH at emitter is about 150mV
        *  - assumes: probe-1 = C / probe-2 = E / probe-3 = B
        *  - PNP
        */
@@ -1341,13 +1469,43 @@ void CheckDepletionModeFET(uint16_t U_Rl)
       R_PORT = 0;                            /* pull down base by Rl */
       ADC_DDR = Probes.Pin_2;
       ADC_PORT = Probes.Pin_2;               /* pull up emitter directly */
-      U_3 = ReadU_20ms(Probes.Ch_3);         /* get voltage at gate/base */
+      U_1 = ReadU_20ms(Probes.Ch_3);         /* get voltage at base */
       ADC_PORT = 0;
 
-      if (U_3 > 4300)         /* low V_BE (Vcc - V_BE) */
+      if (U_1 > 4300)       /* low V_BE < 550mV + 150mV (V_BE = Vcc - V_B) */
       {
-        Flag = 1;             /* most likely a BJT */
+        Flag = 1;           /* most likely a Ge BJT */
       }
+
+
+      #if 0
+      /*
+       *  Check if we might have a Schottky-clamped BJT with a Schottky diode
+       *  between base and collector:
+       *  - measure V_f of Schottky diode
+       *  - assumes: probe-1 = C / probe-2 = E / probe-3 = B
+       *  - PNP
+       *  - this check doesn't seem to be necessary
+       */
+
+      /* get base voltage when base is pulled down by Rl */
+      /* set probes: Gnd -- Rl -- probe-3 / probe-1 -- Vcc / probe-2 -- HiZ */
+      ADC_DDR = Probes.Pin_1;
+      ADC_PORT = Probes.Pin_1;               /* pull up collector directly */
+      U_1 = ReadU_20ms(Probes.Ch_3);         /* get voltage at base */
+      U_2 = ReadU(Probes.Ch_1);              /* get voltage at collector */
+      ADC_DDR = 0;
+
+      if (U_2 > U_1)          /* valid voltages */
+      {
+        U_2 -= U_1;           /* V_f = U_C - U_B */
+
+        if (U_2 < 450)        /* low V_f < 450mV */
+        {
+          Flag = 1;           /* most likely a Schottky BJT */
+        }
+      }
+      #endif
 
 
       /*
@@ -1394,7 +1552,7 @@ void CheckDepletionModeFET(uint16_t U_Rl)
       }
       else                         /* JFET */
       {
-        if (Flag == 0)        /* not a leaky Ge BJT */
+        if (Flag == 0)        /* not a BJT */
         {
           /* p-channel JFET (depletion-mode only) */
           Check.Type = TYPE_P_CHANNEL | TYPE_DEPLETION | TYPE_JFET;
@@ -1482,6 +1640,54 @@ void CheckDepletionModeFET(uint16_t U_Rl)
     Semi.I_value = (uint32_t)U_1 * 10000;    /* U (0.1 µV) */
     Semi.I_value /= U_2;                     /* I = U / R (µA) */
     Semi.I_scale = -6;                       /* µA */
+
+
+    /*
+     *  V_GS(off)
+     *  - based on idea from Pieter-Tjerk de Boer (PA3FWM)
+     */
+
+    /* keep probes as above: probe-1 drain / probe-2 source / probe-3 gate */
+    R_DDR = Probes.Rh_2 | Probes.Rh_3;       /* enable Rh for source and gate */
+    ADC_DDR = Probes.Pin_1;                  /* pull drain directly */
+
+    if (Check.Type & TYPE_N_CHANNEL)    /* n-channel */
+    {
+      /* set probes: probe-1 -- Vcc / Gnd -- Rh -- probe-2 / Gnd -- Rh -- probe-3 */
+      R_PORT = 0;                            /* pull down source and gate via Rh */
+      ADC_PORT = Probes.Pin_1;               /* pull up drain directly */
+    }
+    else                                /* p-channel */
+    {
+      /* set probes: Gnd -- probe-1 / probe-2 -- Rh -- Vcc / probe-3 -- Rh -- Vcc */
+      R_PORT = Probes.Rh_2 | Probes.Rh_3;    /* pull up source and gate via Rh */
+      ADC_PORT = 0;                          /* pull down drain directly */
+    }
+
+    /* get voltages at source and gate */
+    wait10ms();                         /* setting time */
+    U_1 = ReadU(Probes.Ch_2);           /* voltage at source */
+    U_2 = ReadU(Probes.Ch_3);           /* voltage at gate */
+
+    /* U_GS(off) = U_G - U_S */
+    Semi.U_3 = U_2 - U_1;               /* U_G - U_S (mV) */
+
+    if (Check.Type & TYPE_N_CHANNEL)    /* n-channel */
+    {
+      /* U_GS(off) should be negative and not exceed -4.8V (too close to Vcc) */
+      if ((Semi.U_3 > 0) || (Semi.U_3 < -4800))
+      {
+        Semi.U_3 = 0;                   /* invalid */
+      }
+    }    
+    else                                /* p-channel */
+    {
+      /* U_GS(off) should be positive and not exceed 4.8V (too close to Vcc) */
+      if ((Semi.U_3 < 0) || (Semi.U_3 > 4800))
+      {
+        Semi.U_3 = 0;                   /* invalid */
+      }
+    }
   }
 }
 

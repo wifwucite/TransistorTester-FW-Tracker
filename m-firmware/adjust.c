@@ -160,7 +160,9 @@ uint8_t CheckSum(uint8_t *Data, uint8_t Size)
  *  - pointer to data structure in RAM
  *  - pointer to data structure in EEPROM
  *  - size of data structure
- *  - mode: load/save
+ *  - mode: storage mode
+ *    STORAGE_SAVE - save
+ *    STORAGE_LOAD - load
  *
  *  returns:
  *  - 0 on checksum error for read operation
@@ -250,6 +252,7 @@ void ManageAdjustmentStorage(uint8_t Mode, uint8_t ID)
 
   /*
    *  basic adjustment offsets/values
+   *  - two sets available
    */
 
   /* determine EEPROM address */
@@ -268,10 +271,10 @@ void ManageAdjustmentStorage(uint8_t Mode, uint8_t ID)
 
 
   /*
-   *  additional offsets
+   *  touch screen offsets
    */
 
-  /* touch screen offsets */
+  /* write/read EEPROM */
   n = DataStorage((uint8_t *)&Touch, (uint8_t *)&NV_Touch, sizeof(Touch_Type), Mode);
   if (n == 0) Flag = 0;       /* checksum error */
 
@@ -450,6 +453,7 @@ void ShowAdjustmentValues(void)
   Display_Value(Cfg.Vcc, -3, 'V');           /* display Vcc */
 
   #ifdef HW_REF25
+  /* show if external voltage reference is used */
   if (Cfg.OP_Mode & OP_EXT_REF)         /* external 2.5V reference used */
   {
     Display_Space();                    /* display space */
@@ -525,7 +529,10 @@ uint8_t SelfAdjustment(void)
 
   /* make sure all probes are shorted */
   Flag = ShortCircuit(1);
-  if (Flag == 0) Step = 10;        /* skip adjustment on error */
+  if (Flag == 0)              /* aborted */
+  {
+    Step = 10;                /* skip adjustment */
+  }
 
   while (Step <= 6)      /* loop through steps */
   {
@@ -788,12 +795,12 @@ uint8_t SelfAdjustment(void)
   if (CapCounter == 15)
   {
     #ifdef CAP_MULTIOFFSET
-    /* calculate average offset (pF) for each probe pair */
+    /* separately for each probe pair (in pF) */
     NV.CapZero[0] = CapSum1 / 5;        /* probes 1-2 */
     NV.CapZero[1] = CapSum2 / 5;        /* probes 1-3 */
     NV.CapZero[2] = CapSum3 / 5;        /* probes 2-3 */
     #else
-    /* calculate average offset (pF) for all probe pairs */
+    /* for all probe pairs (in pF) */
     NV.CapZero = CapSum / CapCounter;
     #endif
 
@@ -804,12 +811,12 @@ uint8_t SelfAdjustment(void)
   if (RCounter == 15)
   { 
     #ifdef R_MULTIOFFSET
-    /* calculate average offset (0.01 Ohms) for each probe pair */
+    /* separately for each probe pair (in 0.01 Ohms) */
     NV.RZero[0] = RSum1 / 5;            /* probes 1-2 */
     NV.RZero[1] = RSum2 / 5;            /* probes 1-3 */
     NV.RZero[2] = RSum3 / 5;            /* probes 2-3 */
     #else
-    /* calculate average offset (0.01 Ohms) for all probe pairs */
+    /* for all probe pairs (in 0.01 Ohms) */
     NV.RZero = RSum / RCounter;
     #endif
 
@@ -901,7 +908,10 @@ uint8_t SelfTest(void)
 
   /* make sure all probes are shorted */
   Flag = ShortCircuit(1);
-  if (Flag == 0) Test = 10;        /* skip selftest */
+  if (Flag == 0)              /* aborted */
+  {
+    Test = 10;                /* skip selftest */
+  }
 
   /* loop through all tests */
   while (Test <= 6)
@@ -926,9 +936,9 @@ uint8_t SelfTest(void)
       switch (Test)
       {
         case 1:     /* reference voltage */
-          Val0 = ReadU(ADC_BANDGAP);    /* dummy read for bandgap stabilization */
-          Val0 = ReadU(ADC_BANDGAP);    /* read bandgap reference voltage */ 
-          Display_EEString(URef_str);   /* display: Vref */
+          Val0 = ReadU(ADC_CHAN_BANDGAP);    /* dummy read for bandgap stabilization */
+          Val0 = ReadU(ADC_CHAN_BANDGAP);    /* read bandgap reference voltage */ 
+          Display_EEString(URef_str);        /* display: Vref */
 
           Display_NextLine();
           Display_Value(Val0, -3, 'V');      /* display voltage in mV */
@@ -1028,18 +1038,18 @@ uint8_t SelfTest(void)
           /* voltage expected to be near Vcc */
 
           /* TP1: probe-1 -- Rh -- Vcc */
-          R_DDR = (1 << R_RH_1);
           R_PORT = (1 << R_RH_1);
+          R_DDR = (1 << R_RH_1);
           Val1 = ReadU_20ms(TP1);
 
           /* TP2: probe-2 -- Rh -- Vcc */
-          R_DDR = (1 << R_RH_2);
           R_PORT = (1 << R_RH_2);
+          R_DDR = (1 << R_RH_2);
           Val2 = ReadU_20ms(TP2);
 
           /* TP3: probe-3 -- Rh -- Vcc */
-          R_DDR = (1 << R_RH_3);
           R_PORT = (1 << R_RH_3);
+          R_DDR = (1 << R_RH_3);
           Val3 = ReadU_20ms(TP3);
 
           break;

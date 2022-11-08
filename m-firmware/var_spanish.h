@@ -68,7 +68,7 @@
   #endif
 
   #ifdef UI_KEY_HINTS
-  const unsigned char Menu_or_Test_str[] MEM_TYPE = "<Menu O Test>";
+    const unsigned char Menu_or_Test_str[] MEM_TYPE = "<Menu O Test>";
   #endif
 
   #if defined (SW_PWM_SIMPLE) || defined (SW_PWM_PLUS)
@@ -80,7 +80,7 @@
   #endif
 
   #ifdef HW_ZENER
-    const unsigned char Zener_str[] MEM_TYPE = "Zener";
+    const unsigned char Zener_str[] MEM_TYPE = "Zener+Voltaje";
     const unsigned char Min_str[] MEM_TYPE = "Min";
   #endif
 
@@ -91,8 +91,8 @@
   #ifdef HW_FREQ_COUNTER_EXT
     const unsigned char CounterChannel_str[] MEM_TYPE = "Ch";
     const unsigned char FreqInput_str[] MEM_TYPE = "BNC";
-    const unsigned char LF_Crystal_str[] MEM_TYPE = "LF cristal";
-    const unsigned char HF_Crystal_str[] MEM_TYPE = "HF cristal";
+    const unsigned char LF_Crystal_str[] MEM_TYPE = "Cristal BF";
+    const unsigned char HF_Crystal_str[] MEM_TYPE = "Cristal AF";
   #endif
 
   #ifdef HW_EVENT_COUNTER
@@ -101,6 +101,11 @@
     const unsigned char Time_str[] MEM_TYPE = "Tiempo";
     const unsigned char Events_str[] MEM_TYPE = "Eventos";
     const unsigned char Stop_str[] MEM_TYPE = "Parar";
+  #endif
+
+  #ifdef HW_LC_METER
+    const unsigned char LC_Meter_str[] MEM_TYPE = "LC Meter";
+    const unsigned char Adjusting_str[] MEM_TYPE = "adjusting...";
   #endif
 
   #ifdef SW_ENCODER
@@ -148,12 +153,24 @@
     const unsigned char CapDischarge_str[] MEM_TYPE = "Descargando";
   #endif
 
-  #ifdef SW_MONITOR_RL
-    const unsigned char Monitor_RL_str[] MEM_TYPE = "R/L Monitor";
+  #ifdef SW_MONITOR_R
+    const unsigned char Monitor_R_str[] MEM_TYPE = "Monitor Resis.";
   #endif
 
   #ifdef SW_MONITOR_C
-    const unsigned char Monitor_C_str[] MEM_TYPE = "C Monitor";
+    const unsigned char Monitor_C_str[] MEM_TYPE = "Monitor Capac.";
+  #endif
+
+  #ifdef SW_MONITOR_L
+    const unsigned char Monitor_L_str[] MEM_TYPE = "Monitor Induc.";
+  #endif
+
+  #ifdef SW_MONITOR_RCL
+    const unsigned char Monitor_RCL_str[] MEM_TYPE = "Monitor R/C/I";
+  #endif
+
+  #ifdef SW_MONITOR_RL
+    const unsigned char Monitor_RL_str[] MEM_TYPE = "Monitor R/I";
   #endif
 
   #ifdef HW_TOUCH
@@ -165,7 +182,7 @@
   #endif
 
   #ifdef SW_ONEWIRE_SCAN
-    const unsigned char OneWire_Scan_str[] MEM_TYPE = "OneWire Scan";
+    const unsigned char OneWire_Scan_str[] MEM_TYPE = "Escan. OneWire";
     const unsigned char Bus_str[] MEM_TYPE = "Bus";
   #endif
 

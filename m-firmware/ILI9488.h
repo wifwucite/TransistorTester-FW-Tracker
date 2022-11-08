@@ -1,6 +1,6 @@
 /* ************************************************************************
  *
- *   ILI9486 color graphic display controller
+ *   ILI9488 color graphic display controller
  *
  *   (c) 2020 by Markus Reschke
  *
@@ -8,7 +8,7 @@
 
 
 /* ************************************************************************
- *   regular command set
+ *   standard command set
  * ************************************************************************ */
 
 
@@ -101,9 +101,9 @@
 #define FLAG_STAT_IDLE_OFF    0b00000000     /* off */
 #define FLAG_STAT_IDLE_ON     0b00001000     /* on */
   /* interface color pixel format: */
-#define FLAG_STAT_PIX_12      0b00110000     /* 12 bits per pixel */
 #define FLAG_STAT_PIX_16      0b01010000     /* 16 bits per pixel */
 #define FLAG_STAT_PIX_18      0b01100000     /* 18 bits per pixel */
+#define FLAG_STAT_PIX_24      0b01110000     /* 24 bits per pixel */
 
 /* data byte #4: status */
   /* gamma curve - bit 2: bit 0 (always 0) */
@@ -204,11 +204,14 @@
 /* data byte #2: status */
 /* same as byte #1 of CMD_SET_PIX_FORMAT */
   /* pixel format of display bus interface (MCU interface): */
+#define RFLAG_DBI_8           0b00000001     /* 3 bits per pixel */
 #define RFLAG_DBI_16          0b00000101     /* 16 bits per pixel */
 #define RFLAG_DBI_18          0b00000110     /* 18 bits per pixel */
+#define RFLAG_DBI_24          0b00000111     /* 24 bits per pixel */
   /* pixel format of display pixel interface (RGB interface): */
 #define RFLAG_DPI_16          0b01010000     /* 16 bits per pixel */
 #define RFLAG_DPI_18          0b01100000     /* 18 bits per pixel */
+#define RFLAG_DPI_24          0b11100000     /* 18 bits per pixel */
 
 
 /*
@@ -323,6 +326,22 @@
  */
 
 #define CMD_INVERSION_ON      0b00100001     /* display inversion on */
+
+
+/*
+ *  all pixels off (black)
+ *  - 1 byte cmd
+ */
+
+#define CMD_PIXELS_OFF        0b00100010     /* all pixels off */
+
+
+/*
+ *  all pixels on (white)
+ *  - 1 byte cmd
+ */
+
+#define CMD_PIXELS_ON         0b00100011     /* all pixels on */
 
 
 /*
@@ -505,11 +524,14 @@
 /* data byte #1: formats */
 /* same as byte #2 of CMD_READ_PIX_FORMAT */
   /* pixel format of display bus interface (MCU interface): */
+#define FLAG_DBI_3            0b00000001     /* 3 bits per pixel */
 #define FLAG_DBI_16           0b00000101     /* 16 bits per pixel */
 #define FLAG_DBI_18           0b00000110     /* 18 bits per pixel */
+#define FLAG_DBI_24           0b00000111     /* 24 bits per pixel */
   /* pixel format of display pixel interface (RGB interface): */
 #define FLAG_DPI_16           0b01010000     /* 16 bits per pixel */
 #define FLAG_DPI_18           0b01100000     /* 18 bits per pixel */
+#define FLAG_DPI_24           0b01110000     /* 24 bits per pixel */
 
 
 /*
@@ -626,6 +648,9 @@
 #define FLAG_CABC_INTERFACE   0b00000001     /* user interface image */
 #define FLAG_CABC_STILL       0b00000010     /* still picture */
 #define FLAG_CABC_MOVING      0b00000011     /* moving image */
+#define FLAG_CABC_ENH_LOW     0b10000000     /* low enhancement */
+#define FLAG_CABC_ENH_MED     0b10010000     /* medium enhancement */
+#define FLAG_CABC_ENH_HIGH    0b10110000     /* high enhancement */
 
 
 /*
@@ -663,25 +688,18 @@
 
 
 /*
- *  read first checksum
+ *  read automatic brightness control diagnostic
  *  - 1 byte cmd + 2 bytes data (read mode)
  */
 
-#define CMD_READ_FIRST_CHECKSUM    0b10101010     /* read first checksum */
+#define CMD_READ_CABC_DIAG    0b01101000     /* read CABC diagnostic */
 
 /* data byte #1: dummy data */
-/* data byte #2: checksum */
 
-
-/*
- *  read continue checksum
- *  - 1 byte cmd + 2 bytes data (read mode)
- */
-
-#define CMD_READ_CONT_CHECKSUM     0b10101111     /* read continue checksum */
-
-/* data byte #1: dummy data */
-/* data byte #2: checksum */
+/* data byte #2:  */
+  /* pixel format of display bus interface (MCU interface): */
+#define FLAG_CABC_FUNC_OK     0b01000000     /* display is working */
+#define FLAG_CABC_LOAD_OK     0b10000000     /* register values loaded */
 
 
 /*
@@ -744,7 +762,7 @@
 #define FLAG_VSPL_LOW         0b00000000     /* low level sync */
 #define FLAG_VSPL_HIGH        0b00001000     /* high level sync */
   /* 3/4 wire serial interface: */
-#define FLAG_SDA_1            0b00000000     /* use DIN & DOUT */
+#define FLAG_SDA_1            0b00000000     /* use DIN & SDO */
 #define FLAG_SDA_2            0b10000000     /* use DIN/SDA only */
 
 
@@ -762,22 +780,21 @@
 #define FLAG_DIVA_4           0b00000010     /* f_OSC/4 */
 #define FLAG_DIVA_8           0b00000011     /* f_OSC/8 */
   /* frame frequency */
-#define FLAG_FRS_28           0b00000000     /* 28 Hz */
-#define FLAG_FRS_30           0b00010000     /* 30 Hz */
-#define FLAG_FRS_32           0b00100000     /* 32 Hz */
-#define FLAG_FRS_34           0b00110000     /* 34 Hz */
-#define FLAG_FRS_36           0b01000000     /* 36 Hz */
-#define FLAG_FRS_39           0b01010000     /* 39 Hz */
-#define FLAG_FRS_42           0b01100000     /* 42 Hz */
-#define FLAG_FRS_46           0b01110000     /* 46 Hz */
-#define FLAG_FRS_50           0b10000000     /* 50 Hz */
-#define FLAG_FRS_56           0b10010000     /* 56 Hz */
-#define FLAG_FRS_62           0b10100000     /* 62 Hz */
-#define FLAG_FRS_70           0b10110000     /* 70 Hz */
-#define FLAG_FRS_81           0b11000000     /* 81 Hz */
-#define FLAG_FRS_96           0b11010000     /* 96 Hz */
-#define FLAG_FRS_117          0b11100000     /* 117 Hz */
-//#define FLAG_FRS_117          0b11110000     /* 117 Hz */
+                                   /* tearing effect off / on */
+#define FLAG_FRS_28           0b00000000     /* 28.78 Hz / 27.64 Hz */
+#define FLAG_FRS_30           0b00010000     /* 30.38 Hz / 29.17 Hz */
+#define FLAG_FRS_32           0b00100000     /* 32.17 Hz / 30.89 Hz */
+#define FLAG_FRS_34           0b00110000     /* 34.18 Hz / 32.82 Hz */
+#define FLAG_FRS_36           0b01000000     /* 36.46 Hz / 35.01 Hz */
+#define FLAG_FRS_39           0b01010000     /* 39.06 Hz / 37.51 Hz */
+#define FLAG_FRS_42           0b01100000     /* 42.07 Hz / 40.40 Hz */
+#define FLAG_FRS_46           0b01110000     /* 45.57 Hz / 43.76 Hz */
+#define FLAG_FRS_50           0b10000000     /* 49.71 Hz / 47.74 Hz */
+#define FLAG_FRS_55           0b10010000     /* 54.69 Hz / 52.52 Hz */
+#define FLAG_FRS_60           0b10100000     /* 60.76 Hz / 58.35 Hz */
+#define FLAG_FRS_68           0b10110000     /* 68.36 Hz / 65.65 Hz */
+#define FLAG_FRS_78           0b11000000     /* 78.13 Hz / 75.03 Hz */
+#define FLAG_FRS_91           0b11010000     /* 91.15 Hz / 87.53 Hz */
 
 /* data byte #2: line period (clocks per line) */
 #define FLAG_RTNA_16          0b00010000     /* 16 clocks */
@@ -874,10 +891,7 @@
 #define FLAG_DINV_COL         0b00000000     /* column inversion */
 #define FLAG_DINV_1DOT        0b00000001     /* 1-dot inversion */
 #define FLAG_DINV_2DOT        0b00000010     /* 2-dot inversion */
-  /* Z inversion mode: */
-#define FLAG_ZINV_OFF         0b00000000     /* disable */
-#define FLAG_ZINV_ON          0b00010000     /* enable */
- 
+
 
 /*
  *  blanking porch control
@@ -889,22 +903,22 @@
 /* data byte #1: line number of vertical front porch period */
   /* number of HSYNCs, please see datasheet: */
 #define FLAG_VFP_MIN          0b00000010     /* minimum value */
-#define FLAG_VFP_MAX          0b11111111     /* maximum value */
+#define FLAG_VFP_MAX          0b00011111     /* maximum value */
 
 /* data byte #2: line number of vertical back porch period */
   /* number of HSYNCs, please see datasheet: */
 #define FLAG_VBP_MIN          0b00000010     /* minimum value */
-#define FLAG_VBP_MAX          0b11111111     /* maximum value */
+#define FLAG_VBP_MAX          0b00011111     /* maximum value */
 
 /* data byte #3: line number of horizontal front porch period */
   /* number of DOTCLKs, please see datasheet: */
 #define FLAG_HFP_MIN          0b00000010     /* minimum value */
-#define FLAG_HFP_MAX          0b00011111     /* maximum value */
+#define FLAG_HFP_MAX          0b11111111     /* maximum value */
 
 /* data byte #4: line number of horizontal back porch period */
   /* number of DOTCLKs, please see datasheet: */
 #define FLAG_HBP_MIN          0b00000010     /* minimum value */
-#define FLAG_HBP_MAX          0b11111111     /* maximum value */
+#define FLAG_HBP_MAX          0b11000000     /* maximum value */
 
 
 /*
@@ -930,6 +944,9 @@
   /* interface to access GRAM: */
 #define FLAG_RM_SYS           0b00000000     /* system interface */
 #define FLAG_RM_RGB           0b00100000     /* RGB interface */
+  /* RGB interface selection: */
+#define FLAG_RCM_DE           0b00000000     /* DE mode */
+#define FLAG_RCM_SYNC         0b00000000     /* SYNC mode */
   /* display data path for RGB interface: */
 #define FLAG_BYPASS_MEM       0b00000000     /* memory */
 #define FLAG_BYPASS_REG       0b10000000     /* direct to shift register */
@@ -1044,10 +1061,79 @@
   /* Deep Standby Mode: */
 #define FLAG_DSTB_ON          0b00001000     /* enter Deep Standby Mode */
   /* data format for RGB565 to RGB666 conversion in GRAM: */
-#define FLAG_EPF_0            0b00000000     /* DB15 -> R0, DB4 -> B0 */
-#define FLAG_EPF_1            0b01000000     /* R0 = 0, B0 = 0 */
-#define FLAG_EPF_2            0b10000000     /* R0 = 0, B0 = 0 */
-#define FLAG_EPF_3            0b11000000     /* DB15 -> R0, DB5 -> B0 */
+#define FLAG_EPF_0            0b00000000     /* R0 = 0, B0 = 0 */
+#define FLAG_EPF_1            0b01000000     /* R0 = 1, B0 = 1 */
+#define FLAG_EPF_2            0b10000000     /* DB15 -> R0, DB4 -> B0 */
+#define FLAG_EPF_3            0b11000000     /* DB5 -> R0, DB5 -> B0 */
+
+
+/*
+ *  color enhancement control 1
+ *  - 1 byte cmd + 12 bytes data
+ *  - valid range for each axis setting: 0 - 31
+ */
+
+#define CMD_COLOR_CTRL_1      0b10111001     /* color enhancement control 1 */
+
+/* data byte #1: bits 0-4: first axis 1 */
+/* data byte #2: bits 0-4: first axis 2 */
+/* data byte #3: bits 0-4: first axis 3 */
+/* data byte #4: bits 0-4: first axis 4 */
+/* data byte #5: bits 0-4: second axis 1 */
+/* data byte #6: bits 0-4: second axis 2 */
+/* data byte #7: bits 0-4: second axis 3 */
+/* data byte #8: bits 0-4: second axis 4 */
+/* data byte #9: bits 0-4: third axis 1 */
+/* data byte #10: bits 0-4: third axis 2 */
+/* data byte #11: bits 0-4: third axis 3 */
+/* data byte #12: bits 0-4: third axis 4 */
+
+
+/*
+ *  color enhancement control 2
+ *  - 1 byte cmd + 12 bytes data
+ *  - valid range for each axis setting: 0 - 31
+ */
+
+#define CMD_COLOR_CTRL_2      0b10111010     /* color enhancement control 2 */
+
+/* data byte #1: bits 0-4: fourth axis 1 */
+/* data byte #2: bits 0-4: fourth axis 2 */
+/* data byte #3: bits 0-4: fourth axis 3 */
+/* data byte #4: bits 0-4: fourth axis 4 */
+/* data byte #5: bits 0-4: fifth axis 1 */
+/* data byte #6: bits 0-4: fifth axis 2 */
+/* data byte #7: bits 0-4: fifth axis 3 */
+/* data byte #8: bits 0-4: fifth axis 4 */
+/* data byte #9: bits 0-4: sixth axis 1 */
+/* data byte #10: bits 0-4: sixth axis 2 */
+/* data byte #11: bits 0-4: sixth axis 3 */
+/* data byte #12: bits 0-4: sixth axis 4 */
+
+
+/*
+ *  HS lanes control
+ *  - 1 byte cmd + 2 bytes data
+ */
+
+#define CMD_HS_LANE_CTRL      0b10111110     /* HS lanes control */
+
+/* data byte #1: */
+  /* bits 0-2: BT_OTP (see CMD_POWER_CTRL_2) */
+  /* BT_FROM_OTP: use BT value from NV memory */
+#define FLAG_HSL_CTRL_BT_REG       0b00000000     /* use register value */
+#define FLAG_HSL_CTRL_BT_NV        0b00001000     /* use NV memory value */
+  /* PN Inv: swap polarity of HS lanes */
+#define FLAG_HSL_CTRL_PN_NORM      0b00000000     /* normal mode */
+#define FLAG_HSL_CTRL_PN_INV       0b00100000     /* swap pos/neg polarity */
+  /* D/C swap: swap data and clock of DSI lanes */
+#define FLAG_HSL_CTRL_DC_NORM      0b00000000     /* normal mode */
+#define FLAG_HSL_CTRL_DC_SWAP      0b01000000     /* swap data/clock */
+
+/* data byte #2: */
+  /* bit 3: ESD protection */
+#define FLAG_HSL_CTRL_ESD_0        0b00000000     /* enabled ??? */
+#define FLAG_HSL_CTRL_ESD_1        0b00000100     /* disabled ??? */
 
 
 /*
@@ -1128,41 +1214,23 @@
 
 /*
  *  power control 2
- *  - 1 byte cmd + 2 bytes data
+ *  - 1 byte cmd + 1 byte data
  */
 
 #define CMD_POWER_CTRL_2      0b11000001     /* power control 2 */
 
 /* data byte #1: */
+  /* fixed register value: */
+#define FLAG_POWER_CTRL2      0b01000000     /* fixed value */
   /* factor for the step-up circuits: */
 #define FLAG_BT_0             0b00000000     /* VGH=6*VCI1, VGL=5*VCI1 */
 #define FLAG_BT_1             0b00000001     /* VGH=6*VCI1, VGL=4*VCI1 */
-#define FLAG_BT_2             0b00000010     /* VGH=6*VCI1, VGL=3*VCI1 */
+#define FLAG_BT_2             0b00000010     /* inhibited */
 #define FLAG_BT_3             0b00000011     /* VGH=5*VCI1, VGL=5*VCI1 */
 #define FLAG_BT_4             0b00000100     /* VGH=5*VCI1, VGL=4*VCI1 */
 #define FLAG_BT_5             0b00000101     /* VGH=5*VCI1, VGL=3*VCI1 */
 #define FLAG_BT_6             0b00000110     /* VGH=4*VCI1, VGL=4*VCI1 */
 #define FLAG_BT_7             0b00000111     /* VGH=4*VCI1, VGL=3*VCI1 */
-  /* constant current of power supply OPAMP (gamma bias control): */
-#define FLAG_SAP_0            0b00000000     /* small / 0.71 x I */
-#define FLAG_SAP_1            0b00010000     /* small / 0.71 x I */
-#define FLAG_SAP_2            0b00100000     /* small / 0.71 x I */
-#define FLAG_SAP_3            0b00110000     /* small / 0.71 x I */
-#define FLAG_SAP_4            0b01000000     /* medium / 1.00 x I */
-#define FLAG_SAP_5            0b01010000     /* medium to large / 1.25 x I */
-#define FLAG_SAP_6            0b01100000     /* large / 1.43 x I */
-#define FLAG_SAP_7            0b01110000     /* large / 1.43 x I */
-
-/* data byte #2: */
-  /* VCI1 regulator voltage: */
-#define FLAG_VC_EXT           0b00000000     /* external VCI */
-#define FLAG_VC_31            0b00000001     /* 3.1 V */
-#define FLAG_VC_30            0b00000010     /* 3.0 V */
-#define FLAG_VC_29            0b00000011     /* 2.9 V */
-#define FLAG_VC_28            0b00000100     /* 2.8 V */
-#define FLAG_VC_27            0b00000101     /* 2.7 V */
-#define FLAG_VC_26            0b00000110     /* 2.6 V */
-#define FLAG_VC_25            0b00000111     /* 2.5 V */
 
 
 /*
@@ -1179,9 +1247,6 @@
 #define FLAG_DCA0_05          0b00000010     /* 1/2 Hz */
 #define FLAG_DCA0_1           0b00000011     /* 1 Hz */
 #define FLAG_DCA0_2           0b00000100     /* 2 Hz */
-#define FLAG_DCA0_4           0b00000101     /* 4 Hz */
-#define FLAG_DCA0_8           0b00000110     /* 8 Hz */
-#define FLAG_DCA0_16          0b00000111     /* 16 Hz */
 
   /* frequency of step-up circuits 2 and 3: */
 #define FLAG_DCA1_05          0b00000000     /* 1/2 Hz */
@@ -1189,9 +1254,6 @@
 #define FLAG_DCA1_2           0b00100000     /* 2 Hz */
 #define FLAG_DCA1_4           0b00110000     /* 4 Hz */
 #define FLAG_DCA1_8           0b01000000     /* 8 Hz */
-#define FLAG_DCA1_16          0b01010000     /* 16 Hz */
-#define FLAG_DCA1_32          0b01100000     /* 32 Hz */
-#define FLAG_DCA1_64          0b01110000     /* 64 Hz */
 
 
 /*
@@ -1208,9 +1270,6 @@
 #define FLAG_DCB0_05          0b00000010     /* 1/2 Hz */
 #define FLAG_DCB0_1           0b00000011     /* 1 Hz */
 #define FLAG_DCB0_2           0b00000100     /* 2 Hz */
-#define FLAG_DCB0_4           0b00000101     /* 4 Hz */
-#define FLAG_DCB0_8           0b00000110     /* 8 Hz */
-#define FLAG_DCB0_16          0b00000111     /* 16 Hz */
 
   /* frequency of step-up circuits 2 and 3: */
 #define FLAG_DCB1_05          0b00000000     /* 1/2 Hz */
@@ -1218,9 +1277,6 @@
 #define FLAG_DCB1_2           0b00100000     /* 2 Hz */
 #define FLAG_DCB1_4           0b00110000     /* 4 Hz */
 #define FLAG_DCB1_8           0b01000000     /* 8 Hz */
-#define FLAG_DCB1_16          0b01010000     /* 16 Hz */
-#define FLAG_DCB1_32          0b01100000     /* 32 Hz */
-#define FLAG_DCB1_64          0b01110000     /* 64 Hz */
 
 
 /*
@@ -1237,9 +1293,6 @@
 #define FLAG_DCC0_05          0b00000010     /* 1/2 Hz */
 #define FLAG_DCC0_1           0b00000011     /* 1 Hz */
 #define FLAG_DCC0_2           0b00000100     /* 2 Hz */
-#define FLAG_DCC0_4           0b00000101     /* 4 Hz */
-#define FLAG_DCC0_8           0b00000110     /* 8 Hz */
-#define FLAG_DCC0_16          0b00000111     /* 16 Hz */
 
   /* frequency of step-up circuits 2 and 3: */
 #define FLAG_DCC1_05          0b00000000     /* 1/2 Hz */
@@ -1247,9 +1300,6 @@
 #define FLAG_DCC1_2           0b00100000     /* 2 Hz */
 #define FLAG_DCC1_4           0b00110000     /* 4 Hz */
 #define FLAG_DCC1_8           0b01000000     /* 8 Hz */
-#define FLAG_DCC1_16          0b01010000     /* 16 Hz */
-#define FLAG_DCC1_32          0b01100000     /* 32 Hz */
-#define FLAG_DCC1_64          0b01110000     /* 64 Hz */
 
 
 /*
@@ -1433,19 +1483,10 @@
 
 /* data byte #1: */
   /* polarity of PWM signal on CABC_PWM pin: */
-#define FLAG_PWM_NORM         0b00000000     /* original when backlight on */
+#define FLAG_PWM_NORM         0b10110000     /* original when backlight on */
                                              /* always low when backlight off */
-#define FLAG_PWM_INV          0b00000001     /* inversed when backlight on */
+#define FLAG_PWM_INV          0b10110001     /* inversed when backlight on */
                                              /* always high when backlight off */
-  /* polarity of signal on CABC_ON pin: */
-#define FLAG_LED_NORM         0b00000000     /* LEDONR when backlight on */
-                                             /* always low when backlight off */
-#define FLAG_LED_INV          0b00000010     /* inversed LEDONR when backlight on */
-                                             /* always high when backlight off */
-  /* register for CABC_ON pin (LEDONR): */
-#define FLAG_LED_LOW          0b00000000     /* low */
-#define FLAG_LED_HIGH         0b00000100     /* high */
-
 
 /*
  *  CABC control 3
@@ -1601,23 +1642,23 @@
 
 /* data byte #1: */
   /* transition time of brightness change in still image mode: */
-#define FLAG_DIM_STILL_05     0b00000000     /* 1 frame */
-#define FLAG_DIM_STILL_1      0b00000001     /* 1 frame */
-#define FLAG_DIM_STILL_2      0b00000010     /* 2 frames */
-#define FLAG_DIM_STILL_4      0b00000011     /* 4 frames */
-#define FLAG_DIM_STILL_8      0b00000100     /* 8 frames */
-#define FLAG_DIM_STILL_16     0b00000101     /* 16 frames */
-#define FLAG_DIM_STILL_32     0b00000110     /* 32 frames */
-#define FLAG_DIM_STILL_64     0b00000111     /* 64 frames */
+#define FLAG_DIM_STILL_2      0b00000000     /* 2 frames */
+#define FLAG_DIM_STILL_3      0b00000001     /* 3 frames */
+#define FLAG_DIM_STILL_4      0b00000010     /* 4-6 frames */
+#define FLAG_DIM_STILL_8      0b00000011     /* 8-12 frames */
+#define FLAG_DIM_STILL_16     0b00000100     /* 16-24 frames */
+#define FLAG_DIM_STILL_31     0b00000101     /* 32-48 frames */
+#define FLAG_DIM_STILL_64     0b00000110     /* 64-96 frames */
+#define FLAG_DIM_STILL_128    0b00000111     /* 128-192 frames */
   /* transition time of brightness change in moving image mode: */
-#define FLAG_DIM_MOV_05       0b00000000     /* 1 frame */
-#define FLAG_DIM_MOV_1        0b00010000     /* 1 frame */
-#define FLAG_DIM_MOV_2        0b00100000     /* 2 frames */
-#define FLAG_DIM_MOV_4        0b00110000     /* 4 frames */
-#define FLAG_DIM_MOV_8        0b01000000     /* 8 frames */
-#define FLAG_DIM_MOV_16       0b01010000     /* 16 frames */
-#define FLAG_DIM_MOV_32       0b01100000     /* 32 frames */
-#define FLAG_DIM_MOV_64       0b01110000     /* 64 frames */
+#define FLAG_DIM_MOV_2        0b00000000     /* 2 frames */
+#define FLAG_DIM_MOV_3        0b00010000     /* 3 frames */
+#define FLAG_DIM_MOV_4        0b00100000     /* 4-6 frames */
+#define FLAG_DIM_MOV_8        0b00110000     /* 8-12 frames */
+#define FLAG_DIM_MOV_16       0b01000000     /* 16-24 frames */
+#define FLAG_DIM_MOV_32       0b01010000     /* 32-48 frames */
+#define FLAG_DIM_MOV_64       0b01100000     /* 64-96 frames */
+#define FLAG_DIM_MOV_128      0b01110000     /* 128-192 frames */
 
 
 /*
@@ -1629,14 +1670,14 @@
 
 /* data byte #1: */
   /* transition time of brightness change in user interface mode: */
-#define FLAG_DIM_UI_05        0b00000000     /* 1 frame */
-#define FLAG_DIM_UI_1         0b00000001     /* 1 frame */
-#define FLAG_DIM_UI_2         0b00000010     /* 2 frames */
-#define FLAG_DIM_UI_4         0b00000011     /* 4 frames */
-#define FLAG_DIM_UI_8         0b00000100     /* 8 frames */
-#define FLAG_DIM_UI_16        0b00000101     /* 16 frames */
-#define FLAG_DIM_UI_32        0b00000110     /* 32 frames */
-#define FLAG_DIM_UI_64        0b00000111     /* 64 frames */
+#define FLAG_DIM_UI_2         0b00000000     /* 2 frames */
+#define FLAG_DIM_UI_3         0b00000001     /* 3 frames */
+#define FLAG_DIM_UI_4         0b00000010     /* 4-6 frames */
+#define FLAG_DIM_UI_8         0b00000011     /* 8-12 frames */
+#define FLAG_DIM_UI_16        0b00000100     /* 16-24 frames */
+#define FLAG_DIM_UI_31        0b00000101     /* 32-48 frames */
+#define FLAG_DIM_UI_64        0b00000110     /* 64-96 frames */
+#define FLAG_DIM_UI_128       0b00000111     /* 128-192 frames */
   /* minimum brightness change: 4 bits, bits 4-7 */
 #define FLAG_DIM_MIN_MASK     0b11110000     /* filtermask for DIM_MIN value */
 
@@ -1662,12 +1703,40 @@
 #define CMD_WRITE_NV          0b11010000     /* write NV memory */
 
 /* data byte #1: address */
-#define FLAG_NV_ADDR_ID2      0b00000000     /* ID2 */
-#define FLAG_NV_ADDR_ID3      0b00000001     /* ID3 */
+#define FLAG_NV_ADDR_ID4      0b00000000     /* ID4 */
+#define FLAG_NV_ADDR_ID1      0b00000011     /* ID1 */
+#define FLAG_NV_ADDR_ID2      0b00000111     /* ID2 */
+#define FLAG_NV_ADDR_ID3      0b00001011     /* ID3 */
+#define FLAG_NV_ADDR_VCM      0b00001111     /* VCM */
+#define FLAG_NV_ADDR_VRH1     0b00010110     /* VRH1 (5 bits) */
+#define FLAG_NV_ADDR_VRH2     0b00010111     /* VRH2 (5 bits) */
+#define FLAG_NV_ADDR_MADCTL   0b00011001     /* MADCTL (memory access control) */
+#define FLAG_NV_ADDR_BT       0b00011010     /* BT */
+
 #define FLAG_NV_ADDR_VMF      0b00000010     /* VMF (7 bits) */
 #define FLAG_NV_ADDR_MDDI     0b00000100     /* MDDI version (1 bit) */
 
 /* data byte #2: data */
+
+/* for MADCTL (memory access control): */
+  /* page (row) address order: */
+#define FLAG_NV_PAGE_NORM     0b00000000     /* top to bottom */
+#define FLAG_NV_PAGE_REV      0b00010000     /* bottom to top */
+  /* column address order: */
+#define FLAG_NV_COL_NORM      0b00000000     /* left to right */
+#define FLAG_NV_COL_REV       0b00100000     /* right to left */
+  /* page/column order (exchange): */
+#define FLAG_NV_XY_NORM       0b00000000     /* normal */
+#define FLAG_NV_XY_REV        0b01000000     /* reversed (swap x and y) */
+  /* color selector switch: */
+#define FLAG_NV_COLOR_RGB     0b00000000     /* RGB color filter */
+#define FLAG_NV_COLOR_BGR     0b10000000     /* BGR color filter */
+
+/* for BT: */
+  /* bits 0-2: BT (see CMD_POWER_CTRL_2) */
+  /* BT_FROM_OTP: use BT value from NV memory */
+#define FLAG_NV_BT_REG        0b00000000     /* use register value */
+#define FLAG_NV_BT_NV         0b00001000     /* use NV memory value */
 
 
 /*
@@ -1689,7 +1758,7 @@
 
 /*
  *  read NV memory status
- *  - 1 byte cmd + 5 bytes data (read mode)
+ *  - 1 byte cmd + 3 bytes data (read mode)
  */
 
 #define CMD_READ_NV_STATUS    0b11010010     /* read NV memory status  */
@@ -1702,7 +1771,7 @@
 
 /* data byte #3: */
   /* write counter for ID3: 4 bits, bits 0-3 */
-  /* write counter for VMF: 4 bits, bits 4-7 */
+  /* write counter for VCM: 4 bits, bits 4-7 */
 
 /* write counter (number of 1s) */
 #define FLAG_NV_CNT_0         0b00000000     /* not programmed */
@@ -1710,17 +1779,6 @@
 #define FLAG_NV_CNT_2         0b00000011     /* 2 times */
 #define FLAG_NV_CNT_3         0b00000111     /* 3 times */
 #define FLAG_NV_CNT_4         0b00001111     /* 4 times */
-
-/* data byte #4: */
-  /* MDDI version: */
-#define FLAG_MDDI_10          0b00000000     /* MDDI v1.0 */
-#define FLAG_MDDI_12          0b00000001     /* MDDI v1.2 */
-  /* status of NV memory programming: */
-#define FLAG_NV_IDLE          0b00000000     /* idle */
-#define FLAG_NV_BUSY          0b10000000     /* busy */
-
-/* data byte #5: */
-  /* VMF value */
 
 
 /*
@@ -1733,7 +1791,38 @@
 /* data byte #1: dummy byte */
 /* data byte #2: IC version (0x00) */
 /* data byte #3: IC model name - MSB (0x94) */
-/* data byte #4: IC model name - LSB (0x86) */
+/* data byte #4: IC model name - LSB (0x88) */
+
+
+/*
+ *  adjust control 1
+ *  - 1 byte cmd + 1 byte data
+ */
+
+#define CMD_ADJUST_CTRL_1     0b11010111     /* adjust control 1 */
+
+/* data byte #1: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL1_B1     0b00000011     /* fixed value */
+  /* clock for OPamp chopper function: */
+#define FLAG_ADJ_OP_CLK_1     0b00000000     /* op_clk */
+#define FLAG_ADJ_OP_CLK_05    0b00010000     /* op_clk/2 */
+#define FLAG_ADJ_OP_CLK_025   0b00001000     /* op_clk/4 */
+#define FLAG_ADJ_OP_CLK_0125  0b00011000     /* op_clk/8 */
+  /* select clock setting for OPamp chopper function: */
+#define FLAG_ADJ_OP_CLK2      0b00000000     /* from adjust control 2 (default) */
+#define FLAG_ADJ_OP_CLK1      0b00100000     /* from adjust control 1 */
+
+
+/*
+ *  read ID version
+ *  - 1 byte cmd + 2 bytes data (read mode)
+ */
+
+#define CMD_READ_ID_VER       0b11011000     /* read ID version */
+
+/* data byte #1: dummy byte */
+/* data byte #2: IC version (0x00) */
 
 
 /*
@@ -1779,6 +1868,218 @@
 
 
 /*
+ *  set image
+ *  - 1 byte cmd + 1 byte data
+ */
+
+#define CMD_IMAGE             0b11101001     /* set image */
+
+/* data byte #1: 24 bit data bus */
+#define FLAG_IMAGE_DB24_OFF   0b00000000     /* disable 24 bit data bus */
+#define FLAG_IMAGE_DB24_ON    0b00000001     /* enable 24 bit data bus */
+
+
+/*
+ *  adjust control 2
+ *  - 1 byte cmd + 11 bytes data
+ */
+
+#define CMD_ADJUST_CTRL_2     0b11110010     /* adjust control 2 */
+
+/* data byte #1: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B1     0b01011000     /* fixed value */
+  /* delay for OPamp chopper function: */
+#define FLAG_ADJ_OP_DELAY_0   0b00000000     /* original */
+#define FLAG_ADJ_OP_DELAY_1   0b00000001     /* one line */
+
+/* data byte #2: */
+  /* GSW timing (gate modulation timing): */
+#define FLAG_ADJ_40           0b00000000     /* 40 osc_clk */
+#define FLAG_ADJ_44           0b00000000     /* 44 osc_clk */
+#define FLAG_ADJ_48           0b00000000     /* 48 osc_clk */
+#define FLAG_ADJ_52           0b00000000     /* 52 osc_clk */
+#define FLAG_ADJ_56           0b00000000     /* 56 osc_clk */
+#define FLAG_ADJ_60           0b00000000     /* 60 osc_clk */
+#define FLAG_ADJ_64           0b00000000     /* 64 osc_clk */
+#define FLAG_ADJ_68           0b00000000     /* 68 osc_clk */
+#define FLAG_ADJ_72           0b00000000     /* 72 osc_clk */
+#define FLAG_ADJ_76           0b00000000     /* 76 osc_clk */
+#define FLAG_ADJ_80           0b00000000     /* 80 osc_clk */
+#define FLAG_ADJ_84           0b00000000     /* 84 osc_clk */
+#define FLAG_ADJ_88           0b00000000     /* 88 osc_clk */
+#define FLAG_ADJ_92           0b00000000     /* 92 osc_clk */
+#define FLAG_ADJ_96           0b00000000     /* 96 osc_clk */
+#define FLAG_ADJ_100          0b00000000     /* 100 osc_clk */
+#define FLAG_ADJ_104          0b00000000     /* 104 osc_clk */
+#define FLAG_ADJ_108          0b00000000     /* 108 osc_clk */
+#define FLAG_ADJ_112          0b00000000     /* 112 osc_clk */
+#define FLAG_ADJ_116          0b00000000     /* 116 osc_clk */
+#define FLAG_ADJ_120          0b00000000     /* 120 osc_clk */
+#define FLAG_ADJ_124          0b00000000     /* 124 osc_clk */
+#define FLAG_ADJ_128          0b00000000     /* 128 osc_clk */
+#define FLAG_ADJ_132          0b00000000     /* 132 osc_clk */
+#define FLAG_ADJ_136          0b00000000     /* 136 osc_clk */
+#define FLAG_ADJ_140          0b00000000     /* 140 osc_clk */
+#define FLAG_ADJ_144          0b00000000     /* 144 osc_clk */
+#define FLAG_ADJ_148          0b00000000     /* 148 osc_clk */
+#define FLAG_ADJ_152          0b00000000     /* 152 osc_clk */
+#define FLAG_ADJ_156          0b00000000     /* 156 osc_clk */
+#define FLAG_ADJ_160          0b00000000     /* 160 osc_clk */
+#define FLAG_ADJ_164          0b00000000     /* 164 osc_clk */
+#define FLAG_ADJ_168          0b00000000     /* 168 osc_clk */
+#define FLAG_ADJ_172          0b00000000     /* 172 osc_clk */
+#define FLAG_ADJ_176          0b00000000     /* 176 osc_clk */
+#define FLAG_ADJ_180          0b00000000     /* 180 osc_clk */
+#define FLAG_ADJ_184          0b00000000     /* 184 osc_clk */
+#define FLAG_ADJ_188          0b00000000     /* 188 osc_clk */
+#define FLAG_ADJ_192          0b00000000     /* 192 osc_clk */
+#define FLAG_ADJ_196          0b00000000     /* 196 osc_clk */
+#define FLAG_ADJ_200          0b00000000     /* 200 osc_clk */
+#define FLAG_ADJ_204          0b00000000     /* 204 osc_clk */
+#define FLAG_ADJ_208          0b00000000     /* 208 osc_clk */
+#define FLAG_ADJ_212          0b00000000     /* 212 osc_clk */
+#define FLAG_ADJ_216          0b00000000     /* 216 osc_clk */
+#define FLAG_ADJ_220          0b00000000     /* 220 osc_clk */
+#define FLAG_ADJ_224          0b00000000     /* 224 osc_clk */
+#define FLAG_ADJ_228          0b00000000     /* 228 osc_clk */
+#define FLAG_ADJ_232          0b00000000     /* 232 osc_clk */
+#define FLAG_ADJ_236          0b00000000     /* 236 osc_clk */
+#define FLAG_ADJ_240          0b00000000     /* 240 osc_clk */
+#define FLAG_ADJ_244          0b00000000     /* 244 osc_clk */
+#define FLAG_ADJ_248          0b00000000     /* 248 osc_clk */
+#define FLAG_ADJ_252          0b00000000     /* 252 osc_clk */
+#define FLAG_ADJ_256          0b00000000     /* 256 osc_clk */
+#define FLAG_ADJ_260          0b00000000     /* 260 osc_clk */
+#define FLAG_ADJ_264          0b00000000     /* 264 osc_clk */
+#define FLAG_ADJ_268          0b00000000     /* 268 osc_clk */
+#define FLAG_ADJ_272          0b00000000     /* 272 osc_clk */
+#define FLAG_ADJ_276          0b00000000     /* 276 osc_clk */
+#define FLAG_ADJ_280          0b00000000     /* 280 osc_clk */
+#define FLAG_ADJ_284          0b00000000     /* 284 osc_clk */
+#define FLAG_ADJ_288          0b00000000     /* 288 osc_clk */
+#define FLAG_ADJ_292          0b01111110     /* 292 osc_clk */
+
+/* data byte #3: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B3     0b00010010     /* fixed value */
+
+/* data byte #4: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B4     0b00000010     /* fixed value */
+
+/* data byte #5: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B5     0b00000010     /* fixed value */
+  /* EQ internal timing: */
+#define FLAG_ADJ_EQT_1        0b00000000     /* 1 op_clk */
+#define FLAG_ADJ_EQT_2        0b00010000     /* 2 op_clk */
+#define FLAG_ADJ_EQT_3        0b00100000     /* 3 op_clk */
+#define FLAG_ADJ_EQT_4        0b00110000     /* 4 op_clk */
+#define FLAG_ADJ_EQT_5        0b01000000     /* 5 op_clk */
+#define FLAG_ADJ_EQT_6        0b01010000     /* 6 op_clk */
+#define FLAG_ADJ_EQT_7        0b01100000     /* 7 op_clk */
+#define FLAG_ADJ_EQT_8        0b01110000     /* 8 op_clk */
+
+/* data byte #6: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B6     0b01000010     /* fixed value */
+
+/* data byte #7: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B7     0b11111111     /* fixed value */
+
+/* data byte #8: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B8     0b00001010     /* fixed value */
+
+/* data byte #9: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B9     0b10010000     /* fixed value */
+
+/* data byte #10: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B10    0b00010000     /* fixed value */
+  /* GSW mode (slope setting): */
+#define FLAG_ADJ_SLOPE_SHARP  0b00000000     /* sharp slope */
+#define FLAG_ADJ_SLOPE_NORM   0b00000100     /* normal slope */
+#define FLAG_ADJ_SLOPE_GENTLY 0b00001000     /* gently slope */
+#define FLAG_ADJ_SLOPE_OFF    0b00001100     /* GSW off */
+
+/* data byte #11: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL2_B11    0b00001000     /* fixed value */
+  /* OPamp chopper function: */
+#define FLAG_ADJ_OP_SEL_0     0b00000000     /* close */
+#define FLAG_ADJ_OP_SEL_1     0b01000000     /* 1 frame */
+#define FLAG_ADJ_OP_SEL_2     0b10000000     /* 2 frames */
+#define FLAG_ADJ_OP_SEL_3     0b11000000     /* 3 frames */
+
+
+/*
+ *  adjust control 3
+ *  - 1 byte cmd + 4 bytes data
+ */
+
+#define CMD_ADJUST_CTRL_3     0b11110111     /* adjust control 3 */
+
+/* data byte #1: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL3_B1     0b10101001     /* fixed value */
+
+/* data byte #2: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL3_B2     0b01010001     /* fixed value */
+
+
+/* data byte #3: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL3_B3     0b00101100     /* fixed value */
+
+/* data byte #4: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL3_B4     0b00000010     /* fixed value */
+  /* DSI 18 bit option: */
+#define FLAG_ADJ_DSI18_0      0b00000000     /* use stream? RGB666 */
+#define FLAG_ADJ_DSI18_1      0b10000000     /* use loose RGB666 */
+
+
+/*
+ *  adjust control 4
+ *  - 1 byte cmd + 2 bytes data
+ */
+
+#define CMD_ADJUST_CTRL_4     0b11111000     /* adjust control 4 */
+
+/* data byte #1: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL4_B1     0b00100001     /* fixed value */
+
+/* data byte #2: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL4_B2     0b00000100     /* fixed value */
+  /* dither function: */
+#define FLAG_ADJ_DITHER_OFF   0b00000000     /* disable dither */
+#define FLAG_ADJ_DITHER_ON    0b00000001     /* enable dither */
+  /* 3-gamma function: */
+#define FLAG_ADJ_3GAMMA_OFF   0b00000000     /* disable 3-gamma */
+#define FLAG_ADJ_3GAMMA_ON    0b00000010     /* enable 3-gamma */
+
+
+/*
+ *  adjust control 5
+ *  - 1 byte cmd + 1 byte data
+ */
+
+#define CMD_ADJUST_CTRL_5     0b11111001     /* adjust control 5 */
+
+/* data byte #1: */
+  /* OPamp chopper function: */
+#define FLAG_ADJ_OP_OPT_0     0b00000000     /* ??? */
+#define FLAG_ADJ_OP_OPT_1     0b00001000     /* ??? */
+
+
+/*
  *  setting for SPI read command
  *  - 1 byte cmd + 1 byte data
  */
@@ -1789,7 +2090,53 @@
   /* parameter number: 4 bits, bits 0-3 */
   /* enable/disable SPI read: */
 #define FLAG_SPI_READ_OFF     0b00000000     /* disable */
-#define FLAG_SPI_READ_ON      0b00010000     /* enable */
+#define FLAG_SPI_READ_ON      0b10000000     /* enable */
+
+
+/*
+ *  adjust control 6
+ *  - 1 byte cmd + 2 bytes data
+ */
+
+#define CMD_ADJUST_CTRL_6     0b11111100     /* adjust control 6 */
+
+/* data byte #1: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL6_B1     0b00000000     /* fixed value */
+
+/* data byte #2: */
+  /* gate driver non-overlap timing: */
+#define FLAG_ADJ_NOWI_1       0b00000001     /* 1 op_clk */
+#define FLAG_ADJ_NOWI_2       0b00000010     /* 2 op_clk */
+#define FLAG_ADJ_NOWI_3       0b00000011     /* 3 op_clk */
+#define FLAG_ADJ_NOWI_4       0b00000100     /* 4 op_clk */
+#define FLAG_ADJ_NOWI_5       0b00000101     /* 5 op_clk */
+#define FLAG_ADJ_NOWI_6       0b00000110     /* 6 op_clk */
+#define FLAG_ADJ_NOWI_7       0b00000111     /* 7 op_clk */
+#define FLAG_ADJ_NOWI_8       0b00001000     /* 8 op_clk */
+#define FLAG_ADJ_NOWI_9       0b00001001     /* 9 op_clk */
+#define FLAG_ADJ_NOWI_10      0b00001010     /* 10 op_clk */
+#define FLAG_ADJ_NOWI_11      0b00001011     /* 11 op_clk */
+#define FLAG_ADJ_NOWI_12      0b00001100     /* 12 op_clk */
+#define FLAG_ADJ_NOWI_13      0b00001101     /* 13 op_clk */
+#define FLAG_ADJ_NOWI_14      0b00001110     /* 14 op_clk */
+#define FLAG_ADJ_NOWI_15      0b00001111     /* 15 op_clk */
+#define FLAG_ADJ_NOWI_16      0b00010000     /* 16 op_clk */
+
+
+/*
+ *  adjust control 7
+ *  - 1 byte cmd + 1 byte data
+ */
+
+#define CMD_ADJUST_CTRL_7     0b11111111     /* adjust control 7 */
+
+/* data byte #1: */
+  /* fixed register value: */
+#define FLAG_ADJ_CTRL7_B1     0b01000010     /* fixed value */
+  /* 24-axis adjustment for color exchange: */
+#define FLAG_ADJ_AXIS_OFF     0b00000000     /* disable */
+#define FLAG_ADJ_AXIS_ON      0b10000000     /* enable */
 
 
 
