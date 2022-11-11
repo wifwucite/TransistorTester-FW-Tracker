@@ -614,8 +614,8 @@
  *  - settings for Electronic Assembly EA DOGM/DOGL128-6
  *  - uses LCD_CS to support rotary encoder in parallel at PD2/3
  */
-
-//#if 0
+//<<<TheHWcave disable ST7565R
+#if 0
 #define LCD_ST7565R                     /* display controller ST7565R */
 #define LCD_GRAPHIC                     /* graphic display */
 #define LCD_SPI                         /* SPI interface */
@@ -657,7 +657,7 @@
 #define SPI_DDR          LCD_DDR        /* SPI port data direction register */
 #define SPI_SCK          LCD_SCL        /* port pin used for SCK */
 #define SPI_MOSI         LCD_SI         /* port pin used for MOSI */
-//#endif
+#endif
 
 
 
@@ -665,8 +665,8 @@
  *  ST7735
  *  - 4 wire SPI interface using bit-bang SPI
  */
-
-#if 0
+//<<<TheHWcave enable ST7735 and change pins according to hardware
+//#if 0
 #define LCD_ST7735                      /* display controller ST7735 */
 #define LCD_GRAPHIC                     /* graphic display */
 #define LCD_COLOR                       /* color display */
@@ -674,18 +674,18 @@
 /* control and data lines */
 #define LCD_PORT         PORTD          /* port data register */
 #define LCD_DDR          DDRD           /* port data direction register */
-#define LCD_RES          PD4            /* port pin used for /RESX (optional) */
+#define LCD_RES          PD0            /* was PD4 <<<TheHWcave port pin used for /RESX (optional) */
 #define LCD_CS           PD5            /* port pin used for /CSX (optional) */
-#define LCD_DC           PD3            /* port pin used for D/CX */
+#define LCD_DC           PD1            /* was PD3 <<<TheHWcave port pin used for D/CX */
 #define LCD_SCL          PD2            /* port pin used for SCL */
-#define LCD_SDA          PD1            /* port pin used for SDA */
+#define LCD_SDA          PD3            /* was PD1 <<<TheHWcave port pin used for SDA */
 /* display settings */
 #define LCD_DOTS_X       128            /* number of horizontal dots */
 #define LCD_DOTS_Y       160            /* number of vertical dots */
 //#define LCD_OFFSET_X     4               /* enable x offset of 2 or 4 dots */
 //#define LCD_OFFSET_Y     2               /* enable y offset of 1 or 2 dots */
-//#define LCD_FLIP_X                      /* enable horizontal flip */
-#define LCD_FLIP_Y                      /* enable vertical flip */
+#define LCD_FLIP_X                      /* was disabled <<<TheHWcave enable horizontal flip */
+//#define LCD_FLIP_Y                      /* was enabled <<<TheHWcave enable vertical flip */
 #define LCD_ROTATE                      /* switch X and Y (rotate by 90°) */
 //#define LCD_BGR                         /* reverse red and blue color channels */
 //#define LCD_LATE_ON                     /* turn on LCD after clearing it */
@@ -710,7 +710,7 @@
 #define SPI_DDR          LCD_DDR        /* SPI port data direction register */
 #define SPI_SCK          LCD_SCL        /* port pin used for SCK */
 #define SPI_MOSI         LCD_SDA        /* port pin used for MOSI */
-#endif
+//#endif
 
 
 
@@ -948,7 +948,7 @@
 #define ENCODER_DDR      DDRD      /* port data direction register */
 #define ENCODER_PIN      PIND      /* port input pins register */
 #define ENCODER_A        PD3       /* rotary encoder A signal */
-#define ENCODER_B        PD2       /* rotary encoder B signal */
+#define ENCODER_B        PD1       /* was PD2 <<<TheHWcave rotary encoder B signal */
 
 
 /*

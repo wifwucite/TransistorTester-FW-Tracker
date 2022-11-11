@@ -401,9 +401,14 @@
 #define COLOR_SYMBOL          COLOR_YELLOW
 
 /* color codes for probe pins */
-#define COLOR_PROBE_1         COLOR_YELLOW
-#define COLOR_PROBE_2         COLOR_GREEN
-#define COLOR_PROBE_3         COLOR_RED
+//<<<TheHWcave changed
+//#define COLOR_PROBE_1         COLOR_YELLOW
+//#define COLOR_PROBE_2         COLOR_GREEN
+//#define COLOR_PROBE_3         COLOR_RED
+#define COLOR_PROBE_1         COLOR_RED
+#define COLOR_PROBE_2         COLOR_SKY_BLUE
+#define COLOR_PROBE_3         COLOR_GREEN
+
 
 /* battery status */
 #define COLOR_BAT_OK          COLOR_GREEN
