@@ -746,8 +746,8 @@
  *  - instead of continous mode
  *  - uncomment to enable
  */
-//<<<TheHWcave: disable UI_AUTOHOLD
-//#define UI_AUTOHOLD
+//<<<wifwuicte: enable UI_AUTOHOLD (can be toggled by long press on startup)
+#define UI_AUTOHOLD
 
 
 /*
