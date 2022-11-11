@@ -35,8 +35,8 @@
  *  - uncomment to enable and also set ENCODER_PULSES & ENCODER_STEPS below
  *    to match your rotary encoder
  */
-
-//#define HW_ENCODER
+//<<<TheHWcave: enable HW_ENCODER
+#define HW_ENCODER
 
 
 /*
@@ -79,8 +79,8 @@
  *  - uncomment to enable and also adjust UREF_25 below for your voltage
  *    reference
  */
-
-//#define HW_REF25
+//<<<TheHWcave: enable HW_REF25
+#define HW_REF25
 
 
 /*
@@ -88,8 +88,8 @@
  *  - see datasheet of the voltage reference
  *  - or use >= 5.5 digit DMM to measure the voltage
  */
-
-#define UREF_25           2495
+//<<<TheHWcave: measured
+#define UREF_25           2499
 
 
 /*
@@ -112,8 +112,8 @@
  *  - see TP_ZENER in config_<MCU>.h for port pin
  *  - uncomment to enable
  */
-
-//#define HW_ZENER
+//<<<TheHWcave: enable HW_ZENER
+#define HW_ZENER
 
 
 /*
@@ -135,8 +135,8 @@
  *  - when measuring an external voltage (circuit without boost converter)
  *  - uncomment to enable
  */
-
-//#define ZENER_UNSWITCHED
+//<<<TheHWcave: enable ZENER_UNSWITCHED
+#define ZENER_UNSWITCHED
 
 
 /*
@@ -171,8 +171,8 @@
  *  - might be in parallel with LCD module
  *  - uncomment to enable
  */
-
-//#define HW_FREQ_COUNTER_BASIC
+//<<<TheHWcave: enable HW_FREQ_COUNTER_BASIC
+#define HW_FREQ_COUNTER_BASIC
 
 
 /*
@@ -199,10 +199,12 @@
  *  - select the pulse output: either dedicated pin or probes
  *  - see RINGTESTER_PORT in config-<MCU>.h for dedicated pin 
  */
-
-//#define HW_RING_TESTER
-#define RING_TESTER_PIN                 /* dedicated pin */
-//#define RING_TESTER_PROBES              /* probes */
+//<<<TheHWcave: enable HW_RING_TESTER
+#define HW_RING_TESTER
+//<<<TheHWcave: disable RING_TESTER_PIN
+//#define RING_TESTER_PIN                 /* dedicated pin */
+//<<<TheHWcave: enable RING_TESTER_PROBES
+#define RING_TESTER_PROBES              /* probes */
 
 
 /*
@@ -390,7 +392,8 @@
  *  - uncomment to enable
  */
 
-//#define SW_ESR_TOOL
+//<<<TheHWcave: enable SW_ESR_TOOL
+#define SW_ESR_TOOL
 
 
 /*
@@ -417,8 +420,8 @@
  *  - module will be connected to probe leads
  *  - uncomment to enable
  */
-
-#define SW_IR_RECEIVER
+//<<<TheHWcave: disable SW_IR_RECEIVER to save memory
+//#define SW_IR_RECEIVER
 
 
 /*
@@ -474,8 +477,8 @@
  *  check for opto couplers
  *  - uncomment to enable
  */
-
-#define SW_OPTO_COUPLER
+//<<<TheHWcave: disable SW_OPTO_COUPLER to save memory
+//#define SW_OPTO_COUPLER
 
 
 /*
@@ -538,8 +541,8 @@
  *  - requires display with more than two lines
  *  - uncomment to enable
  */
-
-//#define SW_CAP_LEAKAGE
+//<<<TheHWcave: enable SW_CAP_LEAKAGE to save memory
+#define SW_CAP_LEAKAGE
 
 
 /*
@@ -569,11 +572,12 @@
  *  - uncomment to enable (one or more)
  */
 
-//#define SW_MONITOR_R          /* just R */
-//#define SW_MONITOR_C          /* just C plus ESR */
-//#define SW_MONITOR_L          /* just L */
-//#define SW_MONITOR_RCL        /* R plus L, or C plus ESR */
-//#define SW_MONITOR_RL         /* R plus L */
+//<<<TheHWcave: enable all
+#define SW_MONITOR_R          /* just R */
+#define SW_MONITOR_C          /* just C plus ESR */
+#define SW_MONITOR_L          /* just L */
+#define SW_MONITOR_RCL        /* R plus L, or C plus ESR */
+#define SW_MONITOR_RL         /* R plus L */
 
 
 /*
@@ -742,7 +746,7 @@
  *  - instead of continous mode
  *  - uncomment to enable
  */
-
+//<<<TheHWcave: disable UI_AUTOHOLD
 //#define UI_AUTOHOLD
 
 
@@ -770,8 +774,8 @@
  *  Enter menu to select adjustment profile after powering on.
  *  - uncomment to enable
  */
-
-//#define UI_CHOOSE_PROFILE
+//<<<TheHWcave: enable UI_CHOOSE_PROFILE
+#define UI_CHOOSE_PROFILE
 
 
 /*
@@ -902,10 +906,9 @@
  *    as not all fonts include this character (check font!)
  *  - uncomment to enable
  */
-
-//#define UI_PROBE_REVERSED
+//<<<TheHWcave: enable UI_PROBE_REVERSED
+#define UI_PROBE_REVERSED
 //#define UI_PROBE_REVERSED_X
-
 
 
 /*
