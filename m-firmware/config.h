@@ -89,7 +89,7 @@
  *  - or use >= 5.5 digit DMM to measure the voltage
  */
 //<<<TheHWcave: measured
-#define UREF_25           2499
+#define UREF_25           2428
 
 
 /*
