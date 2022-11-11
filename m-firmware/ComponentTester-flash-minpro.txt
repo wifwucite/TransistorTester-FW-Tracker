@@ -1,0 +1,20 @@
+# Check version of programmer
+minipro -V
+
+# Test programmer
+minipro -t
+
+# Update firmware of programmer
+minipro -F updateII_1230.dat
+
+# Read the chip
+minipro -p ATMEGA328P@DIP28 -f ihex -r empty-uno
+
+# Erase the chip
+minipro -p ATMEGA328P@DIP28 -E
+
+# Program data (eprom), code (flash) and fuses
+minipro -p ATMEGA328P@DIP28 -f ihex -e -c data -w ComponentTester.eep
+minipro -p ATMEGA328P@DIP28 -f ihex -e -c code -w ComponentTester.hex
+minipro -p ATMEGA328P@DIP28 -e -c config -w ComponentTester-fuses-328.conf
+
