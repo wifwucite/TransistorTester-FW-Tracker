@@ -1,0 +1,8 @@
+*.o
+ComponentTester
+ComponentTester.hex
+ComponentTester.eep
+ComponentTester.lss
+ComponentTester.map
+dep/**
+
