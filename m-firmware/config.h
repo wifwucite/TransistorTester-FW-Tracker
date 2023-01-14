@@ -88,8 +88,8 @@
  *  - see datasheet of the voltage reference
  *  - or use >= 5.5 digit DMM to measure the voltage
  */
-//<<<wifwucite: measured
-#define UREF_25           2428
+//<<<wifwucite: measured 2.4928
+#define UREF_25           2493
 
 
 /*
