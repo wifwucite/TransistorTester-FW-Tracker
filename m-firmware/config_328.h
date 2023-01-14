@@ -936,8 +936,8 @@
 #define ENCODER_PORT     PORTD     /* port data register */
 #define ENCODER_DDR      DDRD      /* port data direction register */
 #define ENCODER_PIN      PIND      /* port input pins register */
-#define ENCODER_A        PD3       /* rotary encoder A signal */
-#define ENCODER_B        PD1       /* was PD2 <<<TheHWcave rotary encoder B signal */
+#define ENCODER_A        PD1       /* rotary encoder A signal (<<<wifwucite: PD3 -> PD1) */
+#define ENCODER_B        PD3       /* rotary encoder B signal (<<<TheHWcave: PD2 -> PD1) */
 
 
 /*

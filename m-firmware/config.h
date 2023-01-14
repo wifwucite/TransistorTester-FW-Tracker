@@ -215,8 +215,7 @@
  *  - select the pulse output: either dedicated pin or probes
  *  - see RINGTESTER_PORT in config-<MCU>.h for dedicated pin 
  */
-//<<<TheHWcave: enable HW_RING_TESTER
-#define HW_RING_TESTER
+//#define HW_RING_TESTER
 //<<<TheHWcave: disable RING_TESTER_PIN
 //#define RING_TESTER_PIN                 /* dedicated pin */
 //<<<TheHWcave: enable RING_TESTER_PROBES
@@ -503,8 +502,7 @@
  *  check for opto couplers
  *  - uncomment to enable
  */
-//<<<TheHWcave: disable SW_OPTO_COUPLER to save memory
-//#define SW_OPTO_COUPLER
+#define SW_OPTO_COUPLER
 
 
 /*
@@ -598,12 +596,12 @@
  *  - uncomment to enable (one or more)
  */
 
-//<<<TheHWcave: enable all
+//<<<wifwucite: enable almost all
 #define SW_MONITOR_R          /* just R */
 #define SW_MONITOR_C          /* just C plus ESR */
 #define SW_MONITOR_L          /* just L */
 #define SW_MONITOR_RCL        /* R plus L, or C plus ESR */
-#define SW_MONITOR_RL         /* R plus L */
+//#define SW_MONITOR_RL         /* R plus L */
 
 
 /*
