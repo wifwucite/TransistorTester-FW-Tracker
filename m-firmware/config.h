@@ -3,7 +3,7 @@
  *   global configuration, setup and settings
  *
  *   (c) 2012-2022 by Markus Reschke
- *   based on code from Markus Frejek and Karl-Heinz K�bbeler
+ *   based on code from Markus Frejek and Karl-Heinz Kübbeler
  *
  * ************************************************************************ */
 
@@ -1044,7 +1044,7 @@
 /*
  *  Round some values if appropriate.
  *  - for
- *    - DS18B20 (0.1 �C/F)
+ *    - DS18B20 (0.1 °C/F)
  *  - uncomment to enable
  */
 
@@ -1278,9 +1278,9 @@
  *  Correction factors for capacitors (in 0.1%)
  *  - positive factor increases capacitance value
  *    negative factor decreases capacitance value
- *  - CAP_FACTOR_SMALL for caps < 4.7�F
- *  - CAP_FACTOR_MID for caps 4.7 - 47�F
- *  - CAP_FACTOR_LARGE for caps > 47�F
+ *  - CAP_FACTOR_SMALL for caps < 4.7µF
+ *  - CAP_FACTOR_MID for caps 4.7 - 47µF
+ *  - CAP_FACTOR_LARGE for caps > 47µF
  */
 
 #define CAP_FACTOR_SMALL      0      /* no correction */ 
