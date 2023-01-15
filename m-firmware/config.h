@@ -827,8 +827,8 @@
  *  Enter menu to select adjustment profile after powering on.
  *  - uncomment to enable
  */
-//<<<TheHWcave: enable UI_CHOOSE_PROFILE
-#define UI_CHOOSE_PROFILE
+
+//#define UI_CHOOSE_PROFILE
 
 
 /*

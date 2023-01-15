@@ -1,3 +1,9 @@
+# Useful links
+https://gitlab.com/DavidGriffith/minipro/
+https://github.com/blurpy/minipro
+https://www.engbedded.com/fusecalc/
+
+
 # Check version of programmer
 minipro -V
 
@@ -7,6 +13,9 @@ minipro -t
 # Update firmware of programmer
 minipro -F updateII_1230.dat
 
+# Search correct name of a chip
+minipro -L atmega328
+
 # Read the chip
 minipro -p ATMEGA328P@DIP28 -f ihex -r empty-uno
 
@@ -14,7 +23,7 @@ minipro -p ATMEGA328P@DIP28 -f ihex -r empty-uno
 minipro -p ATMEGA328P@DIP28 -E
 
 # Program data (eprom), code (flash) and fuses
+# (for in-circuit programming add "-i" option, see blurpy, 1=nReset, 2=Vcc, 3=GND, 4=MOSI, 5=MISO, 6=SCK)
 minipro -p ATMEGA328P@DIP28 -f ihex -e -c data -w ComponentTester.eep
 minipro -p ATMEGA328P@DIP28 -f ihex -e -c code -w ComponentTester.hex
 minipro -p ATMEGA328P@DIP28 -e -c config -w ComponentTester-fuses-328.conf
-
