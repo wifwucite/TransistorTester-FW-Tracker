@@ -21,10 +21,28 @@ sudo apt install gcc-avr avr-libc
 
 ## My current menu
 
-* 
+* PWM
+* Square Wave (Generator)
+* Zener
+* ESR
+* Cap Leakage
+* R, C, L, RCL Monitor
+* Frequency Counter
+* Opto Coupler
+* Test
+* Adjustment
+* Save
+* Load
+* Show Values
+* Exit
 
 ## Changes I might want to try
 
+* Disable UI_CHOOSE_PROFILE
+* SW_C_VLOSS (cap testing)
+* SW_HFE_CURRENT (BJT testing)
 * UI_ZENER_DIODE
+* HW_PROBE_ZENER (checks voltage when no component is found in standard test mode)
 * Event counter (+ trigger)
+* Rotary encoder
 * Ring tester
